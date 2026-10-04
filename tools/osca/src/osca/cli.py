@@ -105,7 +105,9 @@ def init(
             claude.write_text(f"{text}{sep}\n{CLAUDE_IMPORT}\n", encoding="utf-8")
             typer.echo(f"appended   {CLAUDE_IMPORT} to upstream {CLAUDE_MD}")
 
-    ignored = gitutil.git(root, "check-ignore", CLAUDE_MD, ".claude/settings.json", check=False).split()
+    ignored = gitutil.git(
+        root, "check-ignore", CLAUDE_MD, ".osca/CLAUDE.md", ".claude/settings.json", check=False
+    ).split()
     if ignored:
         typer.secho(
             f"note       upstream .gitignore ignores {', '.join(ignored)}; add with `git add -f`",

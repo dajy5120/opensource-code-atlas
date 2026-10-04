@@ -161,6 +161,16 @@ def verify(
             Issue(".osca/sync.yaml", "anchor", f"anchor {anchor[:12]} is not an ancestor of HEAD")
         )
 
+    if files is None:
+        # OSCA files that upstream's .gitignore hides would silently never be committed
+        hidden = gitutil.split_z(
+            gitutil.git(root, "ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--", ".osca", "osca", ".claude", CLAUDE_MD)
+        )
+        for path in hidden:
+            if path.endswith("settings.local.json"):  # personal Claude Code settings
+                continue
+            issues.append(Issue(path, "ignored", f"OSCA file is hidden by .gitignore; track it with `git add -f {path}`"))
+
     changes = changed_paths(root, anchor)
     if files is not None:
         wanted = set(files)

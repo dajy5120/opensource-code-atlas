@@ -77,3 +77,11 @@ def test_generated_files_must_match_upstream(study: Path):
     issues = verify(study, anchor(study), generated=["src/app.py"])
     assert [i.code for i in issues] == ["generated"]
     assert "git checkout" in issues[0].message
+
+
+def test_ignored_osca_files_are_reported(study: Path):
+    (study / ".gitignore").write_text("CLAUDE.md\n")
+    commit_all(study, "upstream-like ignore")  # .gitignore itself is a new file: covered elsewhere
+    (study / ".osca/CLAUDE.md").write_text("rules")
+    issues = [i for i in verify(study, anchor(study)) if i.code == "ignored"]
+    assert [i.path for i in issues] == [".osca/CLAUDE.md"]
