@@ -14,7 +14,7 @@ import typer
 
 from . import __version__, gitutil, status as status_mod, sync as sync_mod, terms as terms_mod
 from . import impact as impact_mod, index as index_mod, resolve as resolve_mod, state as state_mod
-from . import onboard as onboard_mod, translate as tr_mod
+from . import atlas as atlas_mod, docs as docs_mod, onboard as onboard_mod, translate as tr_mod
 from .markers import comment_tokens, strip_text
 from .project import (
     SYNC_FILE,
@@ -35,6 +35,10 @@ app = typer.Typer(
 terms_app = typer.Typer(help="Terminology utilities.", no_args_is_help=True)
 workflows_app = typer.Typer(help="GitHub Actions housekeeping for study repos.", no_args_is_help=True)
 review_app = typer.Typer(help="Human review of annotations.", no_args_is_help=True)
+docs_app = typer.Typer(help="Analysis documents anchored to source symbols.", no_args_is_help=True)
+atlas_app = typer.Typer(help="Index-repository commands (run inside opensource-code-atlas).", no_args_is_help=True)
+app.add_typer(atlas_app, name="atlas")
+app.add_typer(docs_app, name="docs")
 app.add_typer(review_app, name="review")
 app.add_typer(terms_app, name="terms")
 app.add_typer(workflows_app, name="workflows")
@@ -322,6 +326,7 @@ def index(
             records, state_mod.all_symbols(indexes), _git_user(project.root), set(indexes) if rel else None
         )
         state_mod.save(project.root, records)
+        _write_status(project)
         typer.echo("state: " + ", ".join(f"{k} {len(v)}" for k, v in changes.items()))
     if not show and not write:
         n = sum(len(i.symbols) for i in indexes.values())
@@ -363,6 +368,7 @@ def review_approve(
     records = state_mod.load(project.root)
     done = state_mod.approve(records, chosen, by or _git_user(project.root))
     state_mod.save(project.root, records)
+    _write_status(project)
     typer.echo(f"approved {len(done)} annotated symbol(s)")
 
 
@@ -459,8 +465,86 @@ def translate(
         typer.echo(f"submitted batch {bid}; apply later with `osca translate --collect {bid}`")
         raise typer.Exit(0)
     results = tr_mod.run(project, jobs, terms, tr_mod.caller_for(project), lambda j, r: _print_result(r))
+    _write_status(project)
     done = sum(len(r.applied) for r in results)
     typer.echo(f"\n{done} symbol(s) annotated. Review with `git diff`, then `osca verify` and commit (state already recorded).")
+
+
+def _write_status(project: Project) -> None:
+    """Keep .osca/status.json current for the atlas aggregation."""
+    status_mod.write_json(project, status_mod.compute(project))
+
+
+@docs_app.command("list")
+def docs_list() -> None:
+    """Show each analysis document and whether its anchors changed."""
+    project = _project()
+    rows = docs_mod.check(project)
+    colors = {"current": typer.colors.GREEN, "new": typer.colors.GREEN, "stale": typer.colors.YELLOW, "broken": typer.colors.RED}
+    for r in rows:
+        typer.secho(f"{r.status:<11}{r.doc.path}  ({r.doc.title})", fg=colors.get(r.status))
+        for a in r.changed:
+            typer.echo(f"    changed  {a}")
+        for a in r.missing:
+            typer.echo(f"    missing  {a}")
+    typer.echo(f"{len(rows)} document(s): " + ", ".join(f"{k} {v}" for k, v in docs_mod.summary(rows).items() if v))
+
+
+@docs_app.command("update")
+def docs_update() -> None:
+    """Record new or edited documents (stale ones stay stale until edited or approved)."""
+    project = _project()
+    ch = docs_mod.update(project)
+    _write_status(project)
+    typer.echo("docs: " + ", ".join(f"{k} {len(v)}" for k, v in ch.items()))
+
+
+@docs_app.command("approve")
+def docs_approve(paths: Annotated[list[str], typer.Argument(help="Document paths.")]) -> None:
+    """Confirm documents are still correct for the current code."""
+    project = _project()
+    rel = [(Path.cwd() / p).resolve().relative_to(project.root.resolve()).as_posix() for p in paths]
+    ch = docs_mod.update(project, approve=rel)
+    _write_status(project)
+    typer.echo(f"approved {len(ch['approved'])}, recorded {len(ch['recorded'])}")
+
+
+def _atlas(root: Path | None):
+    r = (root or atlas_mod.find_root(Path.cwd().resolve()))
+    if r is None:
+        die("not inside the opensource-code-atlas repository (use --root)")
+    return atlas_mod.load(r)
+
+
+@atlas_app.command("status")
+def atlas_status(
+    write_readme: Annotated[bool, typer.Option(help="Rewrite the README progress table.")] = False,
+    as_json: Annotated[bool, typer.Option("--json", help="Print JSON.")] = False,
+    offline: Annotated[bool, typer.Option(help="Skip querying upstream tags.")] = False,
+    root: Annotated[Optional[Path], typer.Option(help="Atlas repository root.")] = None,
+) -> None:
+    """Aggregate every registered study repo (status.json + upstream tags)."""
+    atlas = _atlas(root)
+    rows = atlas_mod.collect(atlas, offline)
+    if as_json:
+        typer.echo(json.dumps([{"id": r.id, "status": r.status, "behind": r.behind, "latest": r.latest, "error": r.error} for r in rows], ensure_ascii=False, indent=2))
+        return
+    body = atlas_mod.table(atlas, rows)
+    if write_readme:
+        changed = atlas_mod.write_readme(atlas, body)
+        typer.echo("README.md updated" if changed else "README.md already up to date")
+    else:
+        typer.echo(body)
+
+
+@app.command("list")
+def list_projects(
+    offline: Annotated[bool, typer.Option(help="Skip querying upstream tags.")] = False,
+    root: Annotated[Optional[Path], typer.Option(help="Atlas repository root.")] = None,
+) -> None:
+    """Print the atlas as a category tree."""
+    atlas = _atlas(root)
+    typer.echo(atlas_mod.tree(atlas, atlas_mod.collect(atlas, offline)))
 
 
 @app.command()

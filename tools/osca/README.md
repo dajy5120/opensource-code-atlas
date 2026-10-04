@@ -25,6 +25,11 @@ uv tool install "git+https://github.com/dajy5120/opensource-code-atlas#subdirect
 | `osca translate --collect BATCH_ID` | 应用已完成的批处理结果 |
 | `osca terms lint [PATHS]` | 检查 【zh】 行中 `avoid` 的译法（按上下文） |
 | `osca terms validate [DIR]` | 校验术语库 |
+| `osca docs list / update / approve` | 分析文档的锚点状态（current / stale / broken） |
+| `osca new ID --upstream URL --anchor TAG` | 创建本地学习仓库（克隆、模板、锚点、提交），可同时写入 `projects/ID.yaml` |
+| `osca publish [--public]` | 创建 GitHub 仓库、推送、禁用上游工作流 |
+| `osca atlas status [--write-readme]` | （总仓库）汇总各学习仓库状态与落后版本数 |
+| `osca list` | （总仓库）按分类输出项目树 |
 
 `osca translate` 默认通过本机 Claude Code（`claude -p`）使用订阅额度；`--backend api` 改用 `ANTHROPIC_API_KEY` 按量计费（支持 `--batch`）。
 

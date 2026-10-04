@@ -132,9 +132,13 @@ def start(project: Project, p: Plan) -> bool:
         raise SyncError(f"branch {p.branch} already exists")
     gitutil.git(root, "branch", "-f", project.mirror_branch, p.new_commit)
     gitutil.git(root, "switch", "-c", p.branch, project.study_branch)
-    if _record_state(project, "osca"):
-        gitutil.git(root, "add", STATE_FILE)
-        gitutil.git(root, "commit", "-m", "osca: record annotation state before sync")
+    from .docs import DOCS_STATE, update as update_docs
+
+    recorded = _record_state(project, "osca")
+    docs_changed = any(update_docs(project).values())
+    if recorded or docs_changed:
+        gitutil.git(root, "add", *[f for f in (STATE_FILE, DOCS_STATE) if (root / f).exists()])
+        gitutil.git(root, "commit", "-m", "osca: record annotation and analysis-doc state before sync")
     _state_path(root).write_text(json.dumps(asdict(p)), encoding="utf-8")
     msg = f"sync: upstream {p.label}\n\nupstream-commit: {p.new_commit}"
     if gitutil.git_ok(root, "merge", "--no-ff", "--no-edit", "-m", msg, p.new_commit):
@@ -208,6 +212,7 @@ def finish(project: Project, p: Plan) -> tuple[Path, list[str]]:
         "synced_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
     stale = [r for r in st.rows if r.status == "stale"]
+    docs_stale = [d for d in st.docs if d.status in ("stale", "broken")]
     data.setdefault("history", []).append(
         {
             "from": p.old_ref,
@@ -222,6 +227,7 @@ def finish(project: Project, p: Plan) -> tuple[Path, list[str]]:
                 "renamed": len(diff.renamed),
             },
             "zh_stale": len(stale),
+            "docs_stale": len(docs_stale),
             "zh_orphaned": len(changes["dropped"]) + sum(len(o.orphaned) for o in resolutions),
             "report": report_rel,
         }
@@ -230,7 +236,10 @@ def finish(project: Project, p: Plan) -> tuple[Path, list[str]]:
     status.write_json(project, st)
 
     issues = verify(root, p.new_commit, project.marker, generated=project.generated)
-    gitutil.git(root, "add", SYNC_FILE, STATUS_FILE, STATE_FILE, report_rel)
+    from .docs import DOCS_STATE
+
+    gitutil.git(root, "add", SYNC_FILE, STATUS_FILE, STATE_FILE, report_rel,
+                *([DOCS_STATE] if (root / DOCS_STATE).exists() else []))
     gitutil.git(root, "commit", "-m", f"osca: anchor → {p.new_ref}, sync report")
     _state_path(root).unlink(missing_ok=True)
     _resolutions_path(root).unlink(missing_ok=True)
@@ -310,7 +319,8 @@ def write_report(
         f"- 上游区间：`{p.old_commit[:12]}..{p.new_commit[:12]}`（截至 {dates}），{len(log)} 个提交（不含 merge）",
         f"- 变更文件：{len(numstat)}，其中翻译范围内 {len(in_scope)}",
         f"- 符号变化（翻译范围内）：新增 {len(diff.added)} · 删除 {len(diff.removed)} · 修改 {len(diff.modified)} · 重命名/移动 {len(diff.renamed)}",
-        f"- **需要复核的中文注释：{len(stale)} 个符号**；孤儿注释 {len(orphaned)}；冲突自动解决 {len(conflicted)} 个文件",
+        f"- **需要复核的中文注释：{len(stale)} 个符号**；孤儿注释 {len(orphaned)}；冲突自动解决 {len(conflicted)} 个文件"
+        f"；受影响的分析文档 {sum(1 for d in st.docs if d.status in ('stale', 'broken'))}",
         "",
         "复核方式：注释仍然正确 → `osca review approve <符号或文件>`；需要修改 → 直接编辑 【zh】 行（编辑即视为重新翻译）。",
         "",
@@ -339,6 +349,12 @@ def write_report(
         out += [f"| `{r.path}` | {r.reattached} | {len(r.relocated)} | {len(r.orphaned)} |" for r in conflicted]
         if relocated:
             out += ["", "挂到符号开头的注释（原锚点行已被上游改写，请确认位置）：", *[f"- `{s}`" for s in relocated]]
+    docs_hit = [d for d in st.docs if d.status in ("stale", "broken")]
+    if docs_hit:
+        out += ["", f"## 受影响的分析文档（{len(docs_hit)}）", "",
+                "文档锚定的源码发生变化：更新文档（编辑即刷新），或确认仍正确后 `osca docs approve <文档>`。", "",
+                "| 文档 | 状态 | 变化的锚点 |", "|---|---|---|"]
+        out += [f"| `{d.doc.path}` | {d.status} | {', '.join(f'`{a}`' for a in (d.changed or d.missing))} |" for d in docs_hit]
     if fallback:
         out += ["", f"## 文件级复核（无符号解析器，{len(fallback)}）", "", "| 文件 | 【zh】 行数 |", "|---|---|"]
         out += [f"| `{f}` | {n} |" for f, n in sorted(fallback.items())]

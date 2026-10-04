@@ -17,13 +17,15 @@
 ## 项目
 
 <!-- osca:status:start -->
-| 分类 | 项目 | 上游 | 学习仓库 | 锚点 | 覆盖率 |
-|------|------|------|----------|------|--------|
-| Trading | NautilusTrader | [nautechsystems/nautilus_trader](https://github.com/nautechsystems/nautilus_trader) | [osca-nautilus-trader](https://github.com/dajy5120/osca-nautilus-trader) | v1.231.0 | orderbook 模块（9 文件，55 符号） |
-| Trading · GUI | Flowsurface | [flowsurface-rs/flowsurface](https://github.com/flowsurface-rs/flowsurface) | [osca-flowsurface](https://github.com/dajy5120/osca-flowsurface) | v0.9.0 | data/src/aggr（3 文件，45 符号，AI） |
+| 分类 | 项目 | 上游 | 学习仓库 | 锚点 | 落后 | 覆盖率 | 已审核 | 注释行 | 分析文档 |
+|------|------|------|----------|------|------|--------|--------|--------|----------|
+| Trading · Rust | NautilusTrader | [nautechsystems/nautilus_trader](https://github.com/nautechsystems/nautilus_trader) | [osca-nautilus-trader](https://github.com/dajy5120/osca-nautilus-trader) | v1.231.0 | ✓ 最新 | 0.3% | 0.0% | 145 | — |
+| Trading · Rust · GUI | Flowsurface | [flowsurface-rs/flowsurface](https://github.com/flowsurface-rs/flowsurface) | [osca-flowsurface](https://github.com/dajy5120/osca-flowsurface) | v0.9.0 | ✓ 最新 | 1.9% | 0.0% | 108 | — |
+
+> 由 `osca atlas status --write-readme` 自动生成于 2026-10-04 05:53 UTC；覆盖率按符号统计。
 <!-- osca:status:end -->
 
-> 进度表将在 Phase 4 由 CI 从各学习仓库的 `.osca/status.json` 自动生成。
+> 进度表由 `aggregate` 工作流每日从各学习仓库的 `.osca/status.json` 与上游 tag 自动汇总（`osca atlas status --write-readme`）。
 
 ## 目录
 
@@ -47,6 +49,14 @@ osca status      # 翻译覆盖率（符号级）
 osca queue       # 需要复核的注释
 osca translate crates/model --dry-run   # AI 批量注释（结构化补丁）
 osca sync --dry-run
+
+# 在本仓库
+osca list                      # 分类树
+osca atlas status --write-readme
+
+# 接入新项目（约 1 分钟）
+osca new <id> --upstream <url> --anchor <tag> --registry projects ...
+cd osca-<id> && osca publish --public
 ```
 
 ## 文档
@@ -63,4 +73,4 @@ osca sync --dry-run
 - [x] Phase 1：双源仓库 + `osca verify / status / sync`
 - [x] Phase 2：Tree-sitter 符号索引、符号级增量检测、自动解冲突、复核队列
 - [x] Phase 3：AI 翻译流水线（结构化注释补丁）、术语 lint、Claude Code 命令
-- [ ] Phase 4：模板化、总仓库状态聚合、第二个项目
+- [x] Phase 4：`osca new / publish`、分析文档锚点、总仓库每日聚合、第二个项目（Flowsurface）

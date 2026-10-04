@@ -1,0 +1,32 @@
+name: aggregate
+on:
+  schedule:
+    - cron: "0 1 * * *"   # daily, 09:00 Beijing time
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["projects/**", "catalog/**"]
+permissions:
+  contents: write
+concurrency:
+  group: aggregate
+  cancel-in-progress: false
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install osca
+        run: uv tool install ./tools/osca
+      - name: Aggregate study repositories
+        run: |
+          osca atlas status --write-readme
+          osca list >> "$GITHUB_STEP_SUMMARY"
+      - name: Commit README
+        run: |
+          if git diff --quiet README.md; then echo "no change"; exit 0; fi
+          git config user.name "osca-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "atlas: refresh project status"
+          git push

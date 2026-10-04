@@ -37,6 +37,7 @@ class Status:
     file_status: dict[str, str] = field(default_factory=dict)
     fallback: dict[str, int] = field(default_factory=dict)  # unsupported annotated files -> zh lines
     zh_lines: int = 0
+    docs: list = field(default_factory=list)  # docs.DocStatus
 
     def counted(self) -> list[Row]:
         """Rows in the coverage denominator: translatable symbols plus anything annotated."""
@@ -74,6 +75,9 @@ def compute(project: Project, paths: list[str] | None = None) -> Status:
     st.orphaned = state.orphans(records, symbols, set(indexes) if paths is not None else None)
 
     if paths is None:
+        from .docs import check as check_docs
+
+        st.docs = check_docs(project)
         for path in gitutil.split_z(gitutil.git(root, "ls-files", "-z")):
             tokens = comment_tokens(path)
             if tokens is None or supported(path) or not project.in_scope(path):
@@ -88,6 +92,12 @@ def compute(project: Project, paths: list[str] | None = None) -> Status:
                 st.fallback[path] = n
                 st.zh_lines += n
     return st
+
+
+def _docs_summary(st: Status) -> dict[str, int]:
+    from .docs import summary
+
+    return summary(st.docs)
 
 
 def _ratio(a: int, b: int) -> float:
@@ -119,6 +129,7 @@ def to_json(project: Project, st: Status) -> dict[str, Any]:
             "orphaned": len(st.orphaned),
         },
         "zh_lines": st.zh_lines,
+        "docs": _docs_summary(st),
         "coverage": _ratio(annotated, total),
         "fresh": _ratio(c["translated"] + c["reviewed"], total),
         "reviewed": _ratio(c["reviewed"], total),
@@ -149,6 +160,12 @@ def render(project: Project, st: Status, depth: int = 3) -> str:
         "",
         f"Coverage {data['coverage']:.2%}   Fresh {data['fresh']:.2%}   Reviewed {data['reviewed']:.2%}   ({st.zh_lines} zh lines)",
     ]
+    d = data["docs"]
+    if st.docs:
+        lines.append(
+            f"Analysis docs {len(st.docs)}: current {d['current'] + d['new']} · stale {d['stale']}"
+            f" · broken {d['broken']} · unanchored {d['unanchored']}"
+        )
     groups: dict[str, Counter] = defaultdict(Counter)
     for r in st.counted():
         groups[group_of(r.sym.path, depth)][r.status] += 1
