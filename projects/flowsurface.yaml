@@ -1,0 +1,21 @@
+id: flowsurface
+name: Flowsurface
+description: 原生桌面加密货币图表平台（Rust + iced）：K 线、足迹图、订单簿热力图、逐笔成交
+repository:
+  upstream: https://github.com/flowsurface-rs/flowsurface
+  study: https://github.com/dajy5120/osca-flowsurface
+license: GPL-3.0
+languages:
+  primary: rust
+  secondary: []
+categories:
+- trading
+- rust
+- gui
+terminology:
+- general
+- rust
+- gui
+- trading
+- distributed-systems
+onboarded: '2026-10-04'
