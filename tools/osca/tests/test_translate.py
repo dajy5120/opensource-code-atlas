@@ -119,3 +119,18 @@ def test_parse_message_handles_refusal_and_json():
     assert translate.parse_message(refusal) == (None, "refused (category: cyber)")
     ok = B(stop_reason="end_turn", content=[B(type="thinking"), B(type="text", text='{"annotations": [], "unchanged": [], "notes": ""}')])
     assert translate.parse_message(ok)[0]["notes"] == ""
+
+
+def test_cross_file_type_context(study: Path):
+    (study / "src/types.rs").write_text("/// A price.\npub struct Price {\n    raw: i64,\n}\n")
+    (study / "src/lib.rs").write_text("pub fn mid(a: Price, b: Price) -> Price {\n    todo!()\n}\n")
+    commit_all(study, "types (test only)")
+    import subprocess, yaml
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=study, capture_output=True, text=True).stdout.strip()
+    data = yaml.safe_load((study / ".osca/sync.yaml").read_text())
+    data["anchor"]["upstream_commit"] = head
+    (study / ".osca/sync.yaml").write_text(yaml.safe_dump(data))
+    project = load_project(study)
+    [job] = [j for j in translate.plan(project, ["src/lib.rs"], all_symbols=True)]
+    assert "// src/types.rs:2" in job.context and "pub struct Price" in job.context
+    assert "相关类型定义" in translate.render_file(job, {})

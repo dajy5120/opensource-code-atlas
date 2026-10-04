@@ -77,7 +77,7 @@ def new(
     license: Annotated[str, typer.Option(help="Upstream license (SPDX).")] = "",
     terminology: Annotated[str, typer.Option(help="Comma list of terminology domains.")] = "general",
     include: Annotated[str, typer.Option(help="Comma list of scope globs.")] = "**",
-    exclude: Annotated[str, typer.Option(help="Comma list of exclude globs.")] = "**/tests/**,**/benches/**",
+    exclude: Annotated[str, typer.Option(help="Comma list of exclude globs.")] = "**/tests/**,**/test/**,**/benches/**,**/*_test.go,**/*.test.ts,**/*.spec.ts,**/testdata/**",
     template: Annotated[str, typer.Option(help="Copier template source.")] = onboard_mod.TEMPLATE,
     template_ref: Annotated[str, typer.Option(help="Template git ref.")] = "main",
     registry: Annotated[Optional[Path], typer.Option(help="Atlas projects/ dir: also write <id>.yaml there.")] = None,

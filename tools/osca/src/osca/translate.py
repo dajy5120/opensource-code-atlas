@@ -104,6 +104,7 @@ class Job:
     text: str
     targets: list[Target]
     diff: str = ""
+    context: str = ""  # definitions of types used here but defined in other files
 
     @property
     def sha(self) -> str:
@@ -159,6 +160,9 @@ def plan(
             continue
         per_file.setdefault(r.sym.path, []).append(r)
     rng = _last_sync_range(project)
+    from .context import related_definitions, type_index
+
+    types = type_index(project) if per_file else {}
     size = max_symbols or ai_config(project)["max_symbols"]
     jobs: list[Job] = []
     for path in sorted(per_file)[: limit_files or None]:
@@ -177,8 +181,10 @@ def plan(
             )
             for r in rows
         ]
+        idx = index_text(path, text, project.marker, project.symbol_policy)
+        context = related_definitions(project, idx, text, [t.sym for t in targets], types) if idx else ""
         for i in range(0, len(targets), size):
-            jobs.append(Job(path, text, targets[i : i + size], diff))
+            jobs.append(Job(path, text, targets[i : i + size], diff, context))
     return jobs
 
 
@@ -211,10 +217,16 @@ def render_file(job: Job, terms: dict[str, dict]) -> str:
         + (f"；{t['note']}" if t.get("note") else "")
         for t in rel.values()
     ]
-    return (
+    out = (
         f"# 文件 `{job.path}`\n\n```\n{numbered}\n```\n\n"
         f"# 术语表\n\n" + ("\n".join(term_lines) or "（无）")
     )
+    if job.context:
+        out += (
+            "\n\n# 相关类型定义（来自其他文件，仅供理解；不要为它们写注释）\n\n"
+            f"```\n{job.context}\n```"
+        )
+    return out
 
 
 def render_targets(job: Job) -> str:
@@ -280,6 +292,13 @@ def _is_rust(path: str) -> bool:
     return path.endswith(".rs")
 
 
+def _token(path: str) -> str:
+    """Line-comment token for non-Rust files: `#` (Python, Cython, …) or `//` (Go, TS, C++, …)."""
+    from .markers import comment_tokens
+
+    return "#" if comment_tokens(path) == ("#",) else "//"
+
+
 def _doc_slot(path: str, lines: list[str], sym: Symbol, zh: set[int]) -> tuple[int, str, str]:
     """(insert-before row, comment token, indentation) for a symbol's documentation slot."""
     rust = _is_rust(path)
@@ -293,11 +312,13 @@ def _doc_slot(path: str, lines: list[str], sym: Symbol, zh: set[int]) -> tuple[i
             while r < len(lines) and lines[r].startswith("//") and not lines[r].startswith(("///", "//!")):
                 r += 1  # skip the license header
             return r, "//!", ""
-        # python: after the leading comment block / module docstring, and only before a blank line
+        # other languages: after the leading comment block (license / package doc) and, for
+        # Python, the module docstring -- and only before a blank line, so it attaches to nothing
+        tok = _token(path)
         r = 0
-        while r < len(lines) and lines[r].startswith("#"):
+        while r < len(lines) and lines[r].lstrip().startswith((tok, "/*", "*", "*/") if tok == "//" else tok):
             r += 1
-        if r < len(lines) and lines[r].lstrip().startswith(('"""', "'''", 'r"""')):
+        if tok == "#" and r < len(lines) and lines[r].lstrip().startswith(('"""', "'''", 'r"""')):
             q = '"""' if '"""' in lines[r] else "'''"
             if lines[r].count(q) < 2:
                 r += 1
@@ -307,8 +328,8 @@ def _doc_slot(path: str, lines: list[str], sym: Symbol, zh: set[int]) -> tuple[i
         while r < len(lines) and r in zh:
             r += 1
         if r < len(lines) and lines[r].strip():
-            return -1, "#", ""  # would attach to the following statement
-        return r, "#", ""
+            return -1, tok, ""  # would attach to the following statement
+        return r, tok, ""
     ind = _indent(lines[sym.item_row])
     if rust:
         docs = [
@@ -319,7 +340,7 @@ def _doc_slot(path: str, lines: list[str], sym: Symbol, zh: set[int]) -> tuple[i
         if docs:
             return docs[-1] + 1, "///", ind
         return sym.start, "//", ind
-    return sym.item_row, "#", ind
+    return sym.item_row, _token(path), ind
 
 
 def _line_slot(path: str, lines: list[str], row: int, zh: set[int]) -> tuple[str, str]:
@@ -329,7 +350,7 @@ def _line_slot(path: str, lines: list[str], row: int, zh: set[int]) -> tuple[str
         ref += 1
     ind = _indent(lines[ref]) if ref < len(lines) else ""
     if not _is_rust(path):
-        return "#", ind
+        return _token(path), ind
     prev = row - 1
     while prev >= 0 and prev in zh:
         prev -= 1
@@ -507,7 +528,7 @@ def refresh(project: Project, job: Job) -> Job:
         sym = idx.symbols.get(t.sym.id) if idx else None
         if sym is not None:
             targets.append(Target(sym, t.status, t.changed, [annotation_body(lines[i], project.marker) for i in sym.zh_rows]))
-    return Job(job.path, text, targets, job.diff)
+    return Job(job.path, text, targets, job.diff, job.context)
 
 
 def claude_code_caller(model: str, effort: str, timeout: int = 1200) -> Caller:
@@ -606,7 +627,7 @@ def submit_batch(project: Project, jobs: list[Job], terms: dict[str, dict]) -> s
         if j.path in merged:
             merged[j.path].targets += j.targets
         else:
-            merged[j.path] = Job(j.path, j.text, list(j.targets), j.diff)
+            merged[j.path] = Job(j.path, j.text, list(j.targets), j.diff, j.context)
     jobs = list(merged.values())
     requests = [
         Request(custom_id=f"job-{i}", params=MessageCreateParamsNonStreaming(**request_params(project, j, terms, batch=True)))

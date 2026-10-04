@@ -22,7 +22,7 @@ _DASH = ("--",)
 COMMENT_TOKENS_BY_SUFFIX: dict[str, tuple[str, ...]] = {
     **dict.fromkeys(
         [".rs", ".go", ".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh", ".java", ".kt",
-         ".scala", ".swift", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".cs", ".zig",
+         ".scala", ".swift", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts", ".cs", ".zig", ".hxx",
          ".proto", ".dart", ".fbs", ".capnp"],
         _SLASH,
     ),
