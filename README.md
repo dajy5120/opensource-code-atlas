@@ -61,6 +61,7 @@ cd osca-<id> && osca publish --public
 
 ## 文档
 
+- **[使用手册](docs/GUIDE.md)**：完整流程、命令参考、人工审核步骤、故障排查
 - [实施方案](docs/IMPLEMENTATION_PLAN.md)
 - [ADR](docs/adr/README.md)
 - [中文注释风格指南](docs/conventions/comment-style.md)

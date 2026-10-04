@@ -1,6 +1,6 @@
 # osca
 
-OpenSource Code Atlas 命令行工具。
+OpenSource Code Atlas 命令行工具。完整流程见 [使用手册](../../docs/GUIDE.md)。
 
 ```bash
 uv tool install "git+https://github.com/dajy5120/opensource-code-atlas#subdirectory=tools/osca"
