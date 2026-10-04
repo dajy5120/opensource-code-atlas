@@ -19,10 +19,10 @@
 <!-- osca:status:start -->
 | 分类 | 项目 | 上游 | 学习仓库 | 锚点 | 落后 | 覆盖率 | 已审核 | 注释行 | 分析文档 |
 |------|------|------|----------|------|------|--------|--------|--------|----------|
-| Trading · Rust | NautilusTrader | [nautechsystems/nautilus_trader](https://github.com/nautechsystems/nautilus_trader) | [osca-nautilus-trader](https://github.com/dajy5120/osca-nautilus-trader) | v1.231.0 | ✓ 最新 | 0.3% | 0.0% | 145 | — |
+| Trading · Rust | NautilusTrader | [nautechsystems/nautilus_trader](https://github.com/nautechsystems/nautilus_trader) | [osca-nautilus-trader](https://github.com/dajy5120/osca-nautilus-trader) | v1.231.0 | ✓ 最新 | 0.3% | 0.0% | 145 | 1 |
 | Trading · Rust · GUI | Flowsurface | [flowsurface-rs/flowsurface](https://github.com/flowsurface-rs/flowsurface) | [osca-flowsurface](https://github.com/dajy5120/osca-flowsurface) | v0.9.0 | ✓ 最新 | 1.9% | 0.0% | 108 | — |
 
-> 由 `osca atlas status --write-readme` 自动生成于 2026-10-04 05:53 UTC；覆盖率按符号统计。
+> 由 `osca atlas status --write-readme` 自动生成于 2026-10-04 05:57 UTC；覆盖率按符号统计。
 <!-- osca:status:end -->
 
 > 进度表由 `aggregate` 工作流每日从各学习仓库的 `.osca/status.json` 与上游 tag 自动汇总（`osca atlas status --write-readme`）。
