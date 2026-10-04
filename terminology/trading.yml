@@ -1,0 +1,61 @@
+schema: osca-terms/v1
+domain: trading
+description: 交易系统、市场微观结构与回测术语。
+terms:
+  order_book:       { en: Order Book, zh: 订单簿, avoid: [订单书, 委托簿] }
+  order_book_delta: { en: Order Book Delta, zh: 订单簿增量 }
+  order_book_depth: { en: Order Book Depth, zh: 盘口深度 }
+  top_of_book:      { en: Top of Book, zh: 最优报价, note: 即 L1 买一/卖一 }
+  bid:              { en: Bid, zh: 买价, note: 盘口语境可作“买盘” }
+  ask:              { en: Ask, zh: 卖价, avoid: [询价], note: 盘口语境可作“卖盘” }
+  spread:           { en: Spread, zh: 买卖价差, avoid: [传播, 扩散] }
+  quote_tick:       { en: Quote Tick, zh: 报价 tick }
+  trade_tick:       { en: Trade Tick, zh: 成交 tick }
+  bar:              { en: Bar, zh: K 线, avoid: [条, 柱] }
+  market_data:      { en: Market Data, zh: 市场数据, avoid: [行情资料] }
+  instrument:       { en: Instrument, zh: 交易品种, avoid: [仪器, 工具] }
+  venue:            { en: Venue, zh: 交易场所, avoid: [场地, 地点] }
+  exchange:         { en: Exchange, zh: 交易所 }
+  order:            { en: Order, zh: 订单 }
+  market_order:     { en: Market Order, zh: 市价单 }
+  limit_order:      { en: Limit Order, zh: 限价单 }
+  stop_order:       { en: Stop Order, zh: 止损单 }
+  time_in_force:    { en: Time in Force, zh: 订单有效期, note: GTC/IOC/FOK 等 }
+  fill:             { en: Fill, zh: 成交, avoid: [填充, 填写] }
+  partial_fill:     { en: Partial Fill, zh: 部分成交 }
+  slippage:         { en: Slippage, zh: 滑点 }
+  position:         { en: Position, zh: 持仓, avoid: [位置] }
+  position_side:    { en: Position Side, zh: 持仓方向 }
+  long:             { en: Long, zh: 多头 }
+  short:            { en: Short, zh: 空头 }
+  netting:          { en: Netting, zh: 净额持仓, note: OMS 类型之一，与 hedging（对冲/双向持仓）对应 }
+  hedging_oms:      { en: Hedging (OMS), zh: 双向持仓 }
+  oms:              { en: OMS, zh: 订单管理系统（OMS） }
+  ems:              { en: EMS, zh: 执行管理系统（EMS） }
+  execution_engine: { en: Execution Engine, zh: 执行引擎 }
+  execution_client: { en: Execution Client, zh: 执行客户端 }
+  data_engine:      { en: Data Engine, zh: 数据引擎 }
+  risk_engine:      { en: Risk Engine, zh: 风险引擎 }
+  pre_trade_risk:   { en: Pre-trade Risk, zh: 事前风控 }
+  portfolio:        { en: Portfolio, zh: 投资组合 }
+  account:          { en: Account, zh: 账户 }
+  margin:           { en: Margin, zh: 保证金, avoid: [边距] }
+  leverage:         { en: Leverage, zh: 杠杆 }
+  pnl:              { en: PnL, zh: 盈亏 }
+  realized_pnl:     { en: Realized PnL, zh: 已实现盈亏 }
+  unrealized_pnl:   { en: Unrealized PnL, zh: 未实现盈亏 }
+  commission:       { en: Commission, zh: 手续费 }
+  backtest:         { en: Backtest, zh: 回测 }
+  strategy:         { en: Strategy, zh: 策略 }
+  actor:            { en: Actor, zh: Actor, keep_english: true, note: NautilusTrader 中接收数据/事件的组件基类 }
+  tick_size:        { en: Tick Size, zh: 最小价格变动单位 }
+  lot_size:         { en: Lot Size, zh: 最小交易单位 }
+  price_precision:  { en: Price Precision, zh: 价格精度 }
+  liquidity_side:   { en: Liquidity Side, zh: 流动性方向, note: maker/taker }
+  maker:            { en: Maker, zh: 挂单方 }
+  taker:            { en: Taker, zh: 吃单方 }
+  matching_engine:  { en: Matching Engine, zh: 撮合引擎, avoid: [匹配引擎] }
+  reconciliation:   { en: Reconciliation, zh: 对账 }
+  futures_contract: { en: Futures, zh: 期货 }
+  perpetual:        { en: Perpetual Swap, zh: 永续合约 }
+  option_contract:  { en: Option, zh: 期权, note: 与 Rust 的 Option 类型区分 }

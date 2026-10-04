@@ -1,0 +1,12 @@
+# OSCA 分类。项目通过 projects/<id>.yaml 的 categories 字段归类，一个项目可属于多个分类。
+categories:
+  trading:             { name: Trading,             zh: 量化交易 }
+  rust:                { name: Rust,                zh: Rust 生态 }
+  go:                  { name: Go,                  zh: Go 生态 }
+  python:              { name: Python,              zh: Python 生态 }
+  database:            { name: Database,            zh: 数据库 }
+  distributed-systems: { name: Distributed Systems, zh: 分布式系统 }
+  infrastructure:      { name: Infrastructure,      zh: 基础设施 }
+  ai:                  { name: AI,                  zh: 人工智能 }
+  networking:          { name: Networking,          zh: 网络 }
+  gui:                 { name: GUI,                 zh: 图形界面 }

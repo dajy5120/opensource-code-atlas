@@ -1,0 +1,43 @@
+schema: osca-terms/v1
+domain: rust
+description: Rust 语言术语。语言关键字与生态中约定俗成的英文词保留英文。
+terms:
+  trait:            { en: trait, zh: trait, keep_english: true, avoid: [特征, 特质, 特性], note: 首次出现可写“trait（行为接口）” }
+  trait_object:     { en: Trait Object, zh: trait 对象 }
+  impl_block:       { en: impl block, zh: impl 块 }
+  crate:            { en: crate, zh: crate, keep_english: true, avoid: [板条箱] }
+  module:           { en: Module, zh: 模块 }
+  workspace:        { en: Workspace, zh: 工作空间 }
+  feature_flag:     { en: Feature (Cargo), zh: feature, keep_english: true, note: Cargo feature 保留英文，避免与“特性/功能”混淆 }
+  ownership:        { en: Ownership, zh: 所有权 }
+  borrow:           { en: Borrow, zh: 借用 }
+  borrow_checker:   { en: Borrow Checker, zh: 借用检查器 }
+  lifetime:         { en: Lifetime, zh: 生命周期 }
+  reference:        { en: Reference, zh: 引用 }
+  move_semantics:   { en: Move, zh: 移动, note: 所有权转移 }
+  clone:            { en: Clone, zh: 克隆 }
+  copy_type:        { en: Copy, zh: Copy, keep_english: true, note: 指 Copy trait }
+  smart_pointer:    { en: Smart Pointer, zh: 智能指针 }
+  generic:          { en: Generic, zh: 泛型 }
+  monomorphization: { en: Monomorphization, zh: 单态化 }
+  associated_type:  { en: Associated Type, zh: 关联类型 }
+  closure:          { en: Closure, zh: 闭包 }
+  iterator:         { en: Iterator, zh: 迭代器 }
+  pattern_matching: { en: Pattern Matching, zh: 模式匹配 }
+  enum_variant:     { en: Variant, zh: 变体 }
+  macro:            { en: Macro, zh: 宏 }
+  procedural_macro: { en: Procedural Macro, zh: 过程宏 }
+  derive:           { en: derive, zh: derive, keep_english: true }
+  attribute:        { en: Attribute, zh: 属性, note: "指 #[...] 形式的属性" }
+  unsafe_code:      { en: unsafe, zh: unsafe, keep_english: true }
+  ffi:              { en: FFI, zh: FFI（外部函数接口）, keep_english: true }
+  panic:            { en: panic, zh: panic, keep_english: true, avoid: [恐慌] }
+  result_type:      { en: Result, zh: Result, keep_english: true }
+  option_type:      { en: Option, zh: Option, keep_english: true }
+  future:           { en: Future, zh: Future, keep_english: true, avoid: [期货], note: 交易语境下 futures 是期货，务必区分 }
+  async_await:      { en: async/await, zh: async/await, keep_english: true }
+  executor:         { en: Executor, zh: 执行器 }
+  send_sync:        { en: Send / Sync, zh: Send / Sync, keep_english: true }
+  interior_mutability: { en: Interior Mutability, zh: 内部可变性 }
+  zero_cost_abstraction: { en: Zero-cost Abstraction, zh: 零成本抽象 }
+  pyo3_binding:     { en: PyO3 binding, zh: PyO3 绑定 }

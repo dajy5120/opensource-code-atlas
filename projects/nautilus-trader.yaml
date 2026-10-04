@@ -1,0 +1,15 @@
+id: nautilus-trader
+name: NautilusTrader
+description: 高性能、生产级的算法交易平台（Rust 核心 + Python API），回测与实盘共用同一套引擎。
+repository:
+  upstream: https://github.com/nautechsystems/nautilus_trader
+  study: https://github.com/dajy5120/osca-nautilus-trader
+license: LGPL-3.0
+languages:
+  primary: rust
+  secondary: [python, cython]
+categories: [trading, rust]
+domains: [market-data, order-management, backtesting, execution, risk]
+terminology: [general, rust, python, trading, distributed-systems]
+priority: 1
+onboarded: 2026-10-04

@@ -1,0 +1,51 @@
+schema: osca-terms/v1
+domain: general
+description: 通用编程与软件工程术语，所有项目默认加载。
+terms:
+  abstraction:      { en: Abstraction, zh: 抽象 }
+  adapter:          { en: Adapter, zh: 适配器 }
+  api:              { en: API, zh: API, keep_english: true }
+  assertion:        { en: Assertion, zh: 断言 }
+  backpressure:     { en: Backpressure, zh: 背压, avoid: [反压力] }
+  benchmark:        { en: Benchmark, zh: 基准测试 }
+  buffer:           { en: Buffer, zh: 缓冲区 }
+  cache:            { en: Cache, zh: 缓存 }
+  callback:         { en: Callback, zh: 回调 }
+  component:        { en: Component, zh: 组件 }
+  concurrency:      { en: Concurrency, zh: 并发, note: 与 parallelism（并行）区分 }
+  configuration:    { en: Configuration, zh: 配置 }
+  deserialize:      { en: Deserialize, zh: 反序列化 }
+  edge_case:        { en: Edge Case, zh: 边界情况, avoid: [边缘案例] }
+  encapsulation:    { en: Encapsulation, zh: 封装 }
+  event:            { en: Event, zh: 事件 }
+  event_loop:       { en: Event Loop, zh: 事件循环 }
+  factory:          { en: Factory, zh: 工厂 }
+  fixture:          { en: Fixture, zh: 测试夹具, note: 测试语境下 }
+  handler:          { en: Handler, zh: 处理器 }
+  hot_path:         { en: Hot Path, zh: 热路径 }
+  idempotent:       { en: Idempotent, zh: 幂等 }
+  immutable:        { en: Immutable, zh: 不可变 }
+  interface:        { en: Interface, zh: 接口 }
+  invariant:        { en: Invariant, zh: 不变式, avoid: [不变量], note: 指程序始终成立的条件；数学语境的 invariant 可译“不变量” }
+  latency:          { en: Latency, zh: 延迟 }
+  lifecycle:        { en: Lifecycle, zh: 生命周期 }
+  middleware:       { en: Middleware, zh: 中间件 }
+  mutable:          { en: Mutable, zh: 可变 }
+  namespace:        { en: Namespace, zh: 命名空间 }
+  overhead:         { en: Overhead, zh: 开销 }
+  parallelism:      { en: Parallelism, zh: 并行 }
+  parser:           { en: Parser, zh: 解析器 }
+  payload:          { en: Payload, zh: 负载, note: 消息/请求携带的数据体 }
+  plugin:           { en: Plugin, zh: 插件 }
+  precision:        { en: Precision, zh: 精度 }
+  registry:         { en: Registry, zh: 注册表 }
+  regression:       { en: Regression, zh: 回归 }
+  runtime:          { en: Runtime, zh: 运行时 }
+  serialize:        { en: Serialize, zh: 序列化 }
+  snapshot:         { en: Snapshot, zh: 快照 }
+  state_machine:    { en: State Machine, zh: 状态机 }
+  throughput:       { en: Throughput, zh: 吞吐量 }
+  timestamp:        { en: Timestamp, zh: 时间戳 }
+  trade_off:        { en: Trade-off, zh: 权衡, avoid: [交易] }
+  validation:       { en: Validation, zh: 校验 }
+  zero_copy:        { en: Zero-copy, zh: 零拷贝 }

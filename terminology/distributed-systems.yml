@@ -1,0 +1,26 @@
+schema: osca-terms/v1
+domain: distributed-systems
+description: 分布式系统、消息与存储术语。
+terms:
+  message_bus:      { en: Message Bus, zh: 消息总线 }
+  pub_sub:          { en: Publish/Subscribe, zh: 发布/订阅 }
+  topic:            { en: Topic, zh: 主题 }
+  broker:           { en: Broker, zh: 代理 }
+  consensus:        { en: Consensus, zh: 共识 }
+  leader_election:  { en: Leader Election, zh: 领导者选举 }
+  replication:      { en: Replication, zh: 复制 }
+  partition:        { en: Partition, zh: 分区 }
+  shard:            { en: Shard, zh: 分片 }
+  eventual_consistency: { en: Eventual Consistency, zh: 最终一致性 }
+  linearizability:  { en: Linearizability, zh: 线性一致性 }
+  at_least_once:    { en: At-least-once, zh: 至少一次 }
+  exactly_once:     { en: Exactly-once, zh: 恰好一次 }
+  heartbeat:        { en: Heartbeat, zh: 心跳 }
+  timeout:          { en: Timeout, zh: 超时 }
+  retry:            { en: Retry, zh: 重试 }
+  circuit_breaker:  { en: Circuit Breaker, zh: 熔断器 }
+  rate_limit:       { en: Rate Limit, zh: 限流 }
+  event_sourcing:   { en: Event Sourcing, zh: 事件溯源 }
+  write_ahead_log:  { en: Write-ahead Log, zh: 预写日志 }
+  serialization_format: { en: Serialization Format, zh: 序列化格式 }
+  websocket:        { en: WebSocket, zh: WebSocket, keep_english: true }

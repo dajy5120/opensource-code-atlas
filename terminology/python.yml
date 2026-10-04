@@ -1,0 +1,29 @@
+schema: osca-terms/v1
+domain: python
+description: Python / Cython 术语。
+terms:
+  decorator:        { en: Decorator, zh: 装饰器 }
+  descriptor:       { en: Descriptor, zh: 描述符 }
+  docstring:        { en: Docstring, zh: 文档字符串 }
+  generator:        { en: Generator, zh: 生成器 }
+  coroutine:        { en: Coroutine, zh: 协程 }
+  context_manager:  { en: Context Manager, zh: 上下文管理器 }
+  dunder_method:    { en: Dunder Method, zh: 魔术方法 }
+  type_hint:        { en: Type Hint, zh: 类型注解 }
+  duck_typing:      { en: Duck Typing, zh: 鸭子类型 }
+  gil:              { en: GIL, zh: GIL（全局解释器锁）, keep_english: true }
+  virtual_env:      { en: Virtual Environment, zh: 虚拟环境 }
+  package:          { en: Package, zh: 包 }
+  wheel:            { en: Wheel, zh: wheel, keep_english: true }
+  extension_module: { en: Extension Module, zh: 扩展模块 }
+  cython:           { en: Cython, zh: Cython, keep_english: true }
+  cdef_class:       { en: cdef class, zh: cdef 类, note: Cython 扩展类型 }
+  cpdef:            { en: cpdef, zh: cpdef, keep_english: true, note: 同时生成 C 与 Python 入口的函数 }
+  memoryview:       { en: Memoryview, zh: 内存视图 }
+  pickling:         { en: Pickle, zh: pickle 序列化 }
+  dataclass:        { en: Dataclass, zh: 数据类 }
+  abstract_base_class: { en: Abstract Base Class, zh: 抽象基类 }
+  mixin:            { en: Mixin, zh: 混入类 }
+  asyncio:          { en: asyncio, zh: asyncio, keep_english: true }
+  event_loop_policy: { en: Event Loop Policy, zh: 事件循环策略 }
+  monkey_patch:     { en: Monkey Patch, zh: 猴子补丁 }
