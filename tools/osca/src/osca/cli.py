@@ -36,6 +36,8 @@ terms_app = typer.Typer(help="Terminology utilities.", no_args_is_help=True)
 workflows_app = typer.Typer(help="GitHub Actions housekeeping for study repos.", no_args_is_help=True)
 review_app = typer.Typer(help="Human review of annotations.", no_args_is_help=True)
 docs_app = typer.Typer(help="Analysis documents anchored to source symbols.", no_args_is_help=True)
+site_app = typer.Typer(help="Static reading site.", no_args_is_help=True)
+app.add_typer(site_app, name="site")
 atlas_app = typer.Typer(help="Index-repository commands (run inside opensource-code-atlas).", no_args_is_help=True)
 app.add_typer(atlas_app, name="atlas")
 app.add_typer(docs_app, name="docs")
@@ -545,6 +547,18 @@ def list_projects(
     """Print the atlas as a category tree."""
     atlas = _atlas(root)
     typer.echo(atlas_mod.tree(atlas, atlas_mod.collect(atlas, offline)))
+
+
+@site_app.command("build")
+def site_build(
+    out: Annotated[Path, typer.Option(help="Output directory.")] = Path("_site"),
+) -> None:
+    """Build the static reading site (index, annotated source pages, analysis docs)."""
+    project = _project()
+    from . import site as site_mod
+
+    n = site_mod.build(project, out.resolve())
+    typer.echo(f"site: {n['files']} source page(s), {n['docs']} doc page(s) → {out}")
 
 
 @app.command()

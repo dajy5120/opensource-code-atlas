@@ -134,7 +134,8 @@ def table(atlas: Atlas, rows: list[Row]) -> str:
         n_docs = sum(docs.values()) if docs else 0
         doc_cell = "—" if not n_docs else f"{n_docs}" + (f"（{docs.get('stale', 0)} 过时）" if docs.get("stale") else "")
         lines.append(
-            f"| {_cat_names(atlas, e)} | {e['name']} | [{_repo(up)}]({up}) | [{_repo(st).split('/')[1]}]({st}) "
+            f"| {_cat_names(atlas, e)} | {e['name']} | [{_repo(up)}]({up}) | [{_repo(st).split('/')[1]}]({st})"
+            f" · [在线阅读](https://{_repo(st).split('/')[0]}.github.io/{_repo(st).split('/')[1]}/) "
             f"| {anchor} | {behind} | {_pct(s.get('coverage'))} | {_pct(s.get('reviewed'))} "
             f"| {s.get('zh_lines', '—')} | {doc_cell} |"
             + (f" ⚠ {r.error}" if r.error else "")

@@ -30,6 +30,7 @@ uv tool install "git+https://github.com/dajy5120/opensource-code-atlas#subdirect
 | `osca publish [--public]` | 创建 GitHub 仓库、推送、禁用上游工作流 |
 | `osca atlas status [--write-readme]` | （总仓库）汇总各学习仓库状态与落后版本数 |
 | `osca list` | （总仓库）按分类输出项目树 |
+| `osca site build [--out _site]` | 生成中文源码阅读站点（GitHub Pages） |
 
 `osca translate` 默认通过本机 Claude Code（`claude -p`）使用订阅额度；`--backend api` 改用 `ANTHROPIC_API_KEY` 按量计费（支持 `--batch`）。
 

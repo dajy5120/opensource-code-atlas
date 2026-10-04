@@ -73,4 +73,5 @@ cd osca-<id> && osca publish --public
 - [x] Phase 1：双源仓库 + `osca verify / status / sync`
 - [x] Phase 2：Tree-sitter 符号索引、符号级增量检测、自动解冲突、复核队列
 - [x] Phase 3：AI 翻译流水线（结构化注释补丁）、术语 lint、Claude Code 命令
+- [x] Phase 5：跨文件类型上下文、Go / TS / JS / C / C++、每周自动同步 PR、在线阅读站点
 - [x] Phase 4：`osca new / publish`、分析文档锚点、总仓库每日聚合、第二个项目（Flowsurface）

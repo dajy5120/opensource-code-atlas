@@ -136,6 +136,9 @@ def publish(root: Path, repo: str, public: bool, description: str, log=print) ->
             n += 1
     log(f"disabled  {n} upstream workflow(s)")
     _run(["gh", "api", "-X", "PUT", f"repos/{repo}/actions/permissions", "-F", "enabled=true", "-f", "allowed_actions=all"])
+    # reading site (osca-site workflow) is published with GitHub Pages
+    subprocess.run(["gh", "api", "-X", "POST", f"repos/{repo}/pages", "-f", "build_type=workflow"], capture_output=True)
+    log(f"pages     https://{repo.split('/')[0]}.github.io/{repo.split('/')[1]}/")
     # the osca-sync workflow opens PRs with the workflow token
     _run(["gh", "api", "-X", "PUT", f"repos/{repo}/actions/permissions/workflow",
           "-f", "default_workflow_permissions=read", "-F", "can_approve_pull_request_reviews=true"])
