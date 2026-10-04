@@ -19,7 +19,7 @@
 <!-- osca:status:start -->
 | 分类 | 项目 | 上游 | 学习仓库 | 锚点 | 覆盖率 |
 |------|------|------|----------|------|--------|
-| Trading | NautilusTrader | [nautechsystems/nautilus_trader](https://github.com/nautechsystems/nautilus_trader) | [osca-nautilus-trader](https://github.com/dajy5120/osca-nautilus-trader) | v1.230.0 | 试点中 |
+| Trading | NautilusTrader | [nautechsystems/nautilus_trader](https://github.com/nautechsystems/nautilus_trader) | [osca-nautilus-trader](https://github.com/dajy5120/osca-nautilus-trader) | v1.231.0 | orderbook 模块（9 文件） |
 <!-- osca:status:end -->
 
 > 进度表将在 Phase 4 由 CI 从各学习仓库的 `.osca/status.json` 自动生成。
