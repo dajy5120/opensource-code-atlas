@@ -653,6 +653,10 @@ def sync(
 
 
 def _origin_repo(root: Path) -> str:
+    import os
+
+    if os.environ.get("GH_REPO"):
+        return os.environ["GH_REPO"]
     url = gitutil.git(root, "remote", "get-url", "origin").strip()
     m = re.search(r"github\.com[:/]([^/]+/[^/]+?)(?:\.git)?$", url)
     if not m:
