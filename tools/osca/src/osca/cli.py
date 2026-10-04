@@ -14,7 +14,7 @@ import typer
 
 from . import __version__, gitutil, status as status_mod, sync as sync_mod, terms as terms_mod
 from . import impact as impact_mod, index as index_mod, resolve as resolve_mod, state as state_mod
-from . import translate as tr_mod
+from . import onboard as onboard_mod, translate as tr_mod
 from .markers import comment_tokens, strip_text
 from .project import (
     SYNC_FILE,
@@ -60,6 +60,69 @@ def _project(cwd: Path | None = None) -> Project:
 def version() -> None:
     """Print the osca version."""
     typer.echo(__version__)
+
+
+@app.command()
+def new(
+    project_id: Annotated[str, typer.Argument(help="Project id, e.g. flowsurface.")],
+    upstream: Annotated[str, typer.Option(help="Upstream git URL.")],
+    anchor: Annotated[str, typer.Option(help="Upstream tag/commit to start from (tip: the second-newest release).")],
+    name: Annotated[Optional[str], typer.Option(help="Display name.")] = None,
+    directory: Annotated[Optional[Path], typer.Option(help="Target directory (default ./osca-<id>).")] = None,
+    branch: Annotated[str, typer.Option(help="Upstream development branch.")] = "main",
+    license: Annotated[str, typer.Option(help="Upstream license (SPDX).")] = "",
+    terminology: Annotated[str, typer.Option(help="Comma list of terminology domains.")] = "general",
+    include: Annotated[str, typer.Option(help="Comma list of scope globs.")] = "**",
+    exclude: Annotated[str, typer.Option(help="Comma list of exclude globs.")] = "**/tests/**,**/benches/**",
+    template: Annotated[str, typer.Option(help="Copier template source.")] = onboard_mod.TEMPLATE,
+    template_ref: Annotated[str, typer.Option(help="Template git ref.")] = "main",
+    registry: Annotated[Optional[Path], typer.Option(help="Atlas projects/ dir: also write <id>.yaml there.")] = None,
+    categories: Annotated[str, typer.Option(help="Comma list of catalog categories (for --registry).")] = "",
+    description: Annotated[str, typer.Option(help="One-line description (for --registry).")] = "",
+    languages: Annotated[str, typer.Option(help="Comma list, primary first (for --registry).")] = "rust",
+) -> None:
+    """Create a local study repository for a new upstream project."""
+    split = lambda v: [x.strip() for x in v.split(",") if x.strip()]  # noqa: E731
+    spec = onboard_mod.NewProject(
+        id=project_id,
+        name=name or project_id,
+        upstream=upstream,
+        anchor=anchor,
+        directory=(directory or Path.cwd() / f"osca-{project_id}").resolve(),
+        branch=branch,
+        license=license,
+        terminology=split(terminology),
+        include=split(include),
+        exclude=split(exclude),
+        template=template,
+        template_ref=template_ref,
+    )
+    try:
+        d = onboard_mod.create(spec, typer.echo)
+    except (onboard_mod.OnboardError, gitutil.GitError) as e:
+        die(str(e))
+        return
+    if registry:
+        out = registry / f"{project_id}.yaml"
+        out.write_text(onboard_mod.registry_entry(spec, split(categories), description, split(languages)), encoding="utf-8")
+        typer.echo(f"registry  {out}")
+    typer.echo(f"\nNext: cd {d} && osca status && osca publish --public")
+
+
+@app.command()
+def publish(
+    public: Annotated[bool, typer.Option("--public/--private", help="Repository visibility.")] = True,
+    repo: Annotated[Optional[str], typer.Option(help="owner/name (default dajy5120/osca-<id>).")] = None,
+    description: Annotated[str, typer.Option(help="Repository description.")] = "",
+) -> None:
+    """Create the study repo on GitHub, push, and leave only OSCA workflows enabled."""
+    project = _project()
+    repo = repo or f"dajy5120/osca-{project.id}"
+    desc = description or f"{project.raw.get('name', project.id)} 中文源码学习版（OSCA）：上游源码 + 【zh】 中文注释，持续跟随官方版本"
+    try:
+        onboard_mod.publish(project.root, repo, public, desc, typer.echo)
+    except onboard_mod.OnboardError as e:
+        die(str(e))
 
 
 @app.command()

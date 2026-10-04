@@ -1,0 +1,32 @@
+schema: osca-terms/v1
+domain: gui
+description: 图形界面与 iced（Elm 架构）术语。
+terms:
+  elm_architecture: { en: Elm Architecture, zh: Elm 架构, note: "state / message / update / view 四部分" }
+  message:          { en: Message, zh: 消息, note: iced 中驱动状态更新的事件枚举 }
+  update_fn:        { en: update, zh: update, keep_english: true, note: 处理消息、修改状态的函数 }
+  view_fn:          { en: view, zh: view, keep_english: true, note: 由状态生成界面树的函数 }
+  widget:           { en: Widget, zh: 控件, avoid: [小部件] }
+  element:          { en: Element, zh: Element, keep_english: true, note: iced 中控件树节点的类型 }
+  canvas:           { en: Canvas, zh: 画布 }
+  subscription:     { en: Subscription, zh: 订阅, note: iced 中把外部事件流（定时器、WebSocket）接入消息循环的机制 }
+  task:             { en: Task, zh: Task, keep_english: true, note: iced 中异步副作用（旧称 Command） }
+  theme:            { en: Theme, zh: 主题 }
+  palette:          { en: Palette, zh: 调色板 }
+  layout:           { en: Layout, zh: 布局 }
+  pane_grid:        { en: Pane Grid, zh: 窗格网格 }
+  pane:             { en: Pane, zh: 窗格 }
+  modal:            { en: Modal, zh: 模态框 }
+  tooltip:          { en: Tooltip, zh: 提示框 }
+  overlay:          { en: Overlay, zh: 浮层 }
+  viewport:         { en: Viewport, zh: 视口 }
+  renderer:         { en: Renderer, zh: 渲染器 }
+  frame:            { en: Frame, zh: 帧, note: 画布绘制语境下也指一次绘制的 Frame 对象 }
+  cache_geometry:   { en: Geometry Cache, zh: 几何缓存 }
+  hit_test:         { en: Hit Test, zh: 命中测试 }
+  scroll:           { en: Scroll, zh: 滚动 }
+  zoom:             { en: Zoom, zh: 缩放 }
+  pan:              { en: Pan, zh: 平移 }
+  crosshair:        { en: Crosshair, zh: 十字光标 }
+  window:           { en: Window, zh: 窗口 }
+  popout:           { en: Popout, zh: 弹出窗口 }

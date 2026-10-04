@@ -59,3 +59,17 @@ terms:
   futures_contract: { en: Futures, zh: 期货 }
   perpetual:        { en: Perpetual Swap, zh: 永续合约 }
   option_contract:  { en: Option, zh: 期权, note: 与 Rust 的 Option 类型区分 }
+  candlestick:      { en: Candlestick, zh: K 线图, aliases: [kline] }
+  footprint_chart:  { en: Footprint Chart, zh: 足迹图, note: 在每根 K 线内按价位展示买卖成交量 }
+  heatmap:          { en: Heatmap, zh: 热力图, note: 订单簿深度随时间变化的可视化 }
+  volume_profile:   { en: Volume Profile, zh: 成交量分布 }
+  time_and_sales:   { en: Time and Sales, zh: 逐笔成交 }
+  dom_ladder:       { en: DOM Ladder, zh: 深度阶梯, note: DOM = Depth of Market }
+  open_interest:    { en: Open Interest, zh: 持仓量, avoid: [开放兴趣] }
+  funding_rate:     { en: Funding Rate, zh: 资金费率 }
+  liquidation:      { en: Liquidation, zh: 强平, note: 也作“爆仓”，统一用“强平” }
+  aggregated_trade: { en: Aggregated Trade, zh: 归集成交, aliases: [aggTrade] }
+  ticker:           { en: Ticker, zh: 行情快照, note: 交易所 24h 统计行情；作为“交易代码”时译“代码” }
+  timeframe:        { en: Timeframe, zh: 时间周期 }
+  tick_chart:       { en: Tick Chart, zh: Tick 图, note: 按成交笔数而非时间聚合的 K 线 }
+  imbalance:        { en: Imbalance, zh: 失衡 }
