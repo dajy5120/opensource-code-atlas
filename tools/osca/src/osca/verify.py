@@ -12,8 +12,9 @@ from pathlib import Path
 
 import pathspec
 
-from . import gitutil
+from . import gitutil, lang
 from .markers import DEFAULT_MARKER, comment_tokens, first_divergence, strip_text
+from .symbols import annotation_rows
 
 # Paths OSCA owns outright; anything goes.
 OVERLAY = pathspec.GitIgnoreSpec.from_lines(
@@ -94,7 +95,7 @@ def _check_modified(path: str, study: bytes, upstream: bytes, marker: str) -> Is
         return Issue(path, "binary", "binary or non-UTF-8 file differs from upstream")
     stripped, _ = strip_text(s, tokens, marker)
     if stripped == u:
-        return None
+        return _lint(path, s, marker)
     div = first_divergence(s, u, tokens, marker)
     if div is None:  # pragma: no cover - strip mismatch always has a divergence
         return Issue(path, "code-modified", "content differs from upstream after stripping annotations")
@@ -105,6 +106,22 @@ def _check_modified(path: str, study: bytes, upstream: bytes, marker: str) -> Is
         f"non-annotation line differs from upstream\n    study:    {got.rstrip()!r}\n    upstream: {want.rstrip()!r}",
         line=n,
     )
+
+
+def _lint(path: str, text: str, marker: str) -> Issue | None:
+    """AST placement checks: the blind spots of the strip invariant (ADR 0001)."""
+    mod = lang.for_path(path)
+    if mod is None:
+        return None
+    rows = annotation_rows(path, text, marker)
+    if not rows:
+        return None
+    problems = mod.lint_rows(text.encode("utf-8"), rows)
+    if not problems:
+        return None
+    row, code, msg = problems[0]
+    more = f" (+{len(problems) - 1} more)" if len(problems) > 1 else ""
+    return Issue(path, code, msg + more, line=row + 1)
 
 
 def changed_paths(root: Path, anchor: str) -> dict[str, str]:

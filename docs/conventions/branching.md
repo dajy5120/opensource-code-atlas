@@ -9,6 +9,7 @@ git switch study/zh-CN && git pull
 git switch -c tr/model-orderbook
 # … 添加 【zh】 注释 …
 osca verify
+osca index --write     # 记录新注释对应的代码哈希
 osca status
 git commit -am "zh: crates/model orderbook"
 git push -u origin tr/model-orderbook && gh pr create --base study/zh-CN
@@ -19,19 +20,27 @@ git push -u origin tr/model-orderbook && gh pr create --base study/zh-CN
 ```bash
 git switch study/zh-CN && git pull
 osca sync --dry-run          # 看看会同步到哪个 tag
-osca sync --pr               # fetch → ff mirror → merge 到 sync/<tag> → 报告 → PR
+osca sync --pr               # 记录注释状态 → ff mirror → merge 到 sync/<tag> → 自动解冲突 → 报告 → PR
 ```
 
-有冲突时：
-
-1. `osca sync` 会停下并列出冲突文件；
-2. 冲突块中**上游代码永远优先**，再把仍然适用的 `【zh】` 行放回对应位置（不再适用的删除，并在报告中记下）；
-3. `git add <files> && osca sync --continue`；
-4. `git push origin mirror/<branch> sync/<tag>` 并开 PR。
+冲突由 `osca sync` 自动解决（上游代码优先，中文注释按符号重新挂载，见 ADR 0004）。
+极少数无法自动处理的文件（如被修改过的非源码文件）会让同步停下：手工解决后 `git add` 并运行 `osca sync --continue`。
 
 **合并 sync PR 时必须选择 “Create a merge commit”。**
 
-合并后，阅读 `.osca/reports/sync-*.md` 中“需要复核中文注释的文件”，开 `tr/review-<tag>` 分支逐一复核。
+## 同步后的复核
+
+```bash
+osca queue                       # 需要复核的注释，按 P0 签名 / P1 英文文档 / P2 实现 排序
+osca index --show <file>         # 查看某个文件中各符号的状态
+```
+
+对每一项：
+
+- 注释已经不准确 → 直接修改 【zh】 行（编辑即视为重新翻译），然后 `osca index --write`；
+- 注释仍然正确 → `osca review approve "<path>#<symbol>"`（也可以传文件或目录）。
+
+提交时带上 `.osca/state/symbols.jsonl` 的变化。
 
 ## 实验
 

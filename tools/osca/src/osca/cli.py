@@ -13,6 +13,7 @@ from typing import Annotated, Optional
 import typer
 
 from . import __version__, gitutil, status as status_mod, sync as sync_mod, terms as terms_mod
+from . import impact as impact_mod, index as index_mod, resolve as resolve_mod, state as state_mod
 from .markers import comment_tokens, strip_text
 from .project import (
     SYNC_FILE,
@@ -32,6 +33,8 @@ app = typer.Typer(
 )
 terms_app = typer.Typer(help="Terminology utilities.", no_args_is_help=True)
 workflows_app = typer.Typer(help="GitHub Actions housekeeping for study repos.", no_args_is_help=True)
+review_app = typer.Typer(help="Human review of annotations.", no_args_is_help=True)
+app.add_typer(review_app, name="review")
 app.add_typer(terms_app, name="terms")
 app.add_typer(workflows_app, name="workflows")
 
@@ -196,17 +199,141 @@ def strip(
 def status(
     as_json: Annotated[bool, typer.Option("--json", help="Print JSON instead of a table.")] = False,
     write: Annotated[bool, typer.Option(help="Write .osca/status.json.")] = False,
-    depth: Annotated[int, typer.Option(help="Directory depth used for grouping.")] = 3,
+    depth: Annotated[int, typer.Option(help="Directory depth used for grouping.")] = 4,
 ) -> None:
     """Show translation coverage."""
     project = _project()
-    st = status_mod.compute(project, depth)
+    st = status_mod.compute(project)
     if write:
         status_mod.write_json(project, st)
     if as_json:
         typer.echo(json.dumps(status_mod.to_json(project, st), ensure_ascii=False, indent=2))
     else:
-        typer.echo(status_mod.render(project, st))
+        typer.echo(status_mod.render(project, st, depth))
+
+
+def _rel(project: Project, paths: list[str] | None) -> list[str] | None:
+    if not paths:
+        return None
+    out = []
+    for f in paths:
+        full = (Path.cwd() / f).resolve()
+        rel = full.relative_to(project.root.resolve()).as_posix()
+        if full.is_dir():
+            prefix = rel.rstrip("/") + "/"
+            out += [x for x in index_mod.scope_files(project) if x.startswith(prefix)]
+        else:
+            out.append(rel)
+    return out
+
+
+def _git_user(root: Path) -> str:
+    return gitutil.git(root, "config", "user.name", check=False).strip() or "unknown"
+
+
+@app.command()
+def index(
+    paths: Annotated[Optional[list[str]], typer.Argument(help="Files or directories (default: whole scope).")] = None,
+    write: Annotated[bool, typer.Option(help="Update .osca/state/symbols.jsonl from the current annotations.")] = False,
+    show: Annotated[bool, typer.Option(help="List symbols of the given files.")] = False,
+) -> None:
+    """Build the symbol index; with --write, record annotation state."""
+    project = _project()
+    rel = _rel(project, paths)
+    indexes = index_mod.index_worktree(project, rel)
+    if show:
+        records = state_mod.load(project.root)
+        for path, idx in indexes.items():
+            typer.secho(path, bold=True)
+            for sym in idx.symbols.values():
+                d = state_mod.derive(sym, records.get(sym.id))
+                mark = "" if sym.translatable else " (not counted)"
+                extra = f" [{'/'.join(d.changed)}]" if d.changed else ""
+                typer.echo(f"  L{sym.line:<6}{sym.kind:<8}{d.status:<11}{sym.qualname}{extra}{mark}")
+    if write:
+        records = state_mod.load(project.root)
+        changes = state_mod.update(
+            records, state_mod.all_symbols(indexes), _git_user(project.root), set(indexes) if rel else None
+        )
+        state_mod.save(project.root, records)
+        typer.echo("state: " + ", ".join(f"{k} {len(v)}" for k, v in changes.items()))
+    if not show and not write:
+        n = sum(len(i.symbols) for i in indexes.values())
+        typer.echo(f"{len(indexes)} files, {n} symbols")
+
+
+@app.command()
+def queue(
+    prefix: Annotated[Optional[str], typer.Argument(help="Path prefix filter.")] = None,
+    which: Annotated[str, typer.Option("--state", help="stale | pending | translated | reviewed")] = "stale",
+    limit: Annotated[int, typer.Option(help="Maximum rows (0 = all).")] = 50,
+) -> None:
+    """List symbols waiting for work (stale annotations first by priority)."""
+    project = _project()
+    rows = status_mod.queue(status_mod.compute(project), which, prefix)
+    for r in rows[: limit or None]:
+        extra = f"{r.priority} {'/'.join(r.changed):<9}" if which == "stale" else ""
+        typer.echo(f"{extra}{r.sym.path}:{r.sym.line}  {r.sym.qualname}")
+    if limit and len(rows) > limit:
+        typer.echo(f"… {len(rows) - limit} more")
+    typer.echo(f"{len(rows)} {which}")
+
+
+@review_app.command("approve")
+def review_approve(
+    targets: Annotated[list[str], typer.Argument(help="Symbol ids (path#name), files or directories.")],
+    by: Annotated[Optional[str], typer.Option(help="Reviewer name (default: git user.name).")] = None,
+) -> None:
+    """Confirm annotations are correct for the current code (clears stale, marks reviewed)."""
+    project = _project()
+    ids = [t for t in targets if "#" in t]
+    files = _rel(project, [t for t in targets if "#" not in t]) or []
+    paths = sorted({i.split("#", 1)[0] for i in ids} | set(files))
+    syms = state_mod.all_symbols(index_mod.index_worktree(project, paths))
+    chosen = [s for s in syms.values() if s.zh and (s.id in ids or s.path in files)]
+    missing = [i for i in ids if i not in syms]
+    for i in missing:
+        typer.secho(f"not found: {i}", fg=typer.colors.YELLOW)
+    records = state_mod.load(project.root)
+    done = state_mod.approve(records, chosen, by or _git_user(project.root))
+    state_mod.save(project.root, records)
+    typer.echo(f"approved {len(done)} annotated symbol(s)")
+
+
+@app.command()
+def impact(
+    old: Annotated[str, typer.Argument(help="Old upstream revision.")],
+    new: Annotated[str, typer.Argument(help="New upstream revision.")],
+) -> None:
+    """Symbol-level diff between two upstream revisions (translation scope only)."""
+    project = _project()
+    d = impact_mod.diff_revs(project, old, new)
+    typer.echo(f"{len(d.files)} files · added {len(d.added)} · removed {len(d.removed)} · "
+               f"modified {len(d.modified)} · renamed {len(d.renamed)}")
+    for a, b, ch in d.modified:
+        typer.echo(f"  M {'/'.join(ch):<13}{b.id}")
+    for a, b in d.renamed:
+        typer.echo(f"  R {'':<13}{a.id} -> {b.id}")
+    for x in d.removed:
+        typer.echo(f"  D {'':<13}{x.id}")
+    for x in d.added:
+        if x.translatable:
+            typer.echo(f"  A {'':<13}{x.id}")
+
+
+@app.command()
+def resolve() -> None:
+    """Resolve merge conflicts: upstream code wins, annotations are re-attached."""
+    project = _project()
+    root = project.root
+    for path in sync_mod.conflicts(root):
+        if path == CLAUDE_MD:
+            continue
+        out = resolve_mod.resolve_file(root, path, project.marker)
+        if out is None:
+            typer.secho(f"manual  {path}", fg=typer.colors.YELLOW)
+        else:
+            typer.echo(f"ok      {path}  reattached {out.reattached}, relocated {len(out.relocated)}, orphaned {len(out.orphaned)}")
 
 
 @app.command()

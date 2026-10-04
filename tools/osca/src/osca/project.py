@@ -15,6 +15,7 @@ OSCA_DIR = ".osca"
 PROJECT_FILE = f"{OSCA_DIR}/project.yaml"
 SYNC_FILE = f"{OSCA_DIR}/sync.yaml"
 STATUS_FILE = f"{OSCA_DIR}/status.json"
+STATE_FILE = f"{OSCA_DIR}/state/symbols.jsonl"
 REPORTS_DIR = f"{OSCA_DIR}/reports"
 
 
@@ -38,6 +39,7 @@ class Project:
     include: list[str] = field(default_factory=list)
     exclude: list[str] = field(default_factory=list)
     generated: list[str] = field(default_factory=list)
+    symbol_policy: dict[str, Any] = field(default_factory=dict)
 
     @property
     def scope(self) -> pathspec.GitIgnoreSpec:
@@ -90,6 +92,7 @@ def load_project(root: Path) -> Project:
             include=list(scope.get("include", ["**"])),
             exclude=list(scope.get("exclude", [])),
             generated=list(study.get("generated", [])),
+            symbol_policy=dict(scope.get("symbols", {})),
         )
     except KeyError as e:
         raise ConfigError(f"{PROJECT_FILE}: missing required key {e}") from e

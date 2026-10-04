@@ -19,7 +19,13 @@
 - 在 `study/zh-CN` 上做代码实验（实验用 `exp/<category>/<name>` 分支）。
 
 每次编辑后会自动运行 `osca verify`（`.claude/settings.json` hook）。若报告 `code-modified`，立刻撤销那处改动。
-完成一批注释后手动运行 `osca verify && osca status`。
+完成一批注释后运行 `osca verify && osca index --write && osca status`。
+
+## 复核过时的注释
+
+`osca queue` 列出上游改动后需要复核的注释（P0 签名 / P1 英文文档 / P2 实现）。对每一项先阅读上游的改动，再：
+- 注释已不准确：修改 【zh】 行（编辑即重新翻译）；
+- 注释仍然正确：不要修改，留给人工 `osca review approve`——你不能替人确认审核。
 
 ## 注释写法
 
