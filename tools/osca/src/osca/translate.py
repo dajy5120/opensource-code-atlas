@@ -23,7 +23,8 @@ from .symbols import MODULE, FileIndex, Symbol, annotation_body, index_text
 from .terms import relevant
 from .verify import verify
 
-DEFAULT_MODEL = "claude-opus-5-5"
+DEFAULT_BACKEND = "claude-code"  # subscription quota via `claude -p`; "api" = Anthropic API key
+DEFAULT_MODEL = "claude-sonnet-5-5"
 DEFAULT_EFFORT = "medium"
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
 MAX_TOKENS = 64000
@@ -126,6 +127,7 @@ class Result:
 def ai_config(project: Project) -> dict[str, Any]:
     cfg = dict(project.raw.get("ai") or {})
     return {
+        "backend": cfg.get("backend", DEFAULT_BACKEND),
         "model": cfg.get("model", DEFAULT_MODEL),
         "effort": cfg.get("effort", DEFAULT_EFFORT),
         "max_symbols": int(cfg.get("max_symbols_per_request", 20)),
@@ -506,6 +508,64 @@ def refresh(project: Project, job: Job) -> Job:
         if sym is not None:
             targets.append(Target(sym, t.status, t.changed, [annotation_body(lines[i], project.marker) for i in sym.zh_rows]))
     return Job(job.path, text, targets, job.diff)
+
+
+def claude_code_caller(model: str, effort: str, timeout: int = 1200) -> Caller:
+    """Run requests through the local Claude Code CLI (`claude -p`), i.e. the user's subscription.
+
+    No tools, our own system prompt, structured output via --json-schema, and a
+    neutral working directory so no project CLAUDE.md is loaded.
+    """
+    import subprocess
+    import tempfile
+
+    def call(params: dict[str, Any]) -> tuple[dict[str, Any] | None, str, dict[str, int]]:
+        system = "\n\n".join(b["text"] for b in params["system"])
+        prompt = "\n\n".join(b["text"] for b in params["messages"][0]["content"])
+        cmd = [
+            "claude", "-p",
+            "--model", model,
+            "--output-format", "json",
+            "--tools", "",
+            "--no-session-persistence",
+            *([] if "haiku" in model else ["--effort", effort]),
+            "--system-prompt", system,
+            "--json-schema", json.dumps(SCHEMA),
+        ]
+        with tempfile.TemporaryDirectory(prefix="osca-") as cwd:
+            try:
+                proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True, cwd=cwd, timeout=timeout)
+            except FileNotFoundError:
+                return None, "`claude` CLI not found (install Claude Code, or set ai.backend: api)", {}
+            except subprocess.TimeoutExpired:
+                return None, f"claude -p timed out after {timeout}s", {}
+        try:
+            out = json.loads(proc.stdout)
+        except json.JSONDecodeError:
+            return None, f"claude -p failed (exit {proc.returncode}): {(proc.stderr or proc.stdout)[-400:]}", {}
+        u = out.get("usage") or {}
+        usage = {k: int(u.get(k, 0) or 0) for k in ("input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")}
+        usage["cost_micro_usd"] = int(float(out.get("total_cost_usd") or 0) * 1_000_000)  # list-price equivalent
+        if out.get("is_error") or out.get("subtype") != "success":
+            return None, f"claude -p: {out.get('subtype')} {str(out.get('result', ''))[:300]}", usage
+        data = out.get("structured_output")
+        if data is None:
+            try:
+                data = json.loads(out.get("result") or "")
+            except json.JSONDecodeError:
+                return None, "claude -p returned no structured output", usage
+        return data, "", usage
+
+    return call
+
+
+def caller_for(project: Project) -> Caller:
+    cfg = ai_config(project)
+    if cfg["backend"] == "api":
+        return anthropic_caller()
+    if cfg["backend"] == "claude-code":
+        return claude_code_caller(cfg["model"], cfg["effort"])
+    raise ValueError(f"unknown ai.backend {cfg['backend']!r}")
 
 
 def run(project: Project, jobs: list[Job], terms: dict[str, dict], call: Caller, on_result=None) -> list[Result]:

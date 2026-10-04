@@ -313,7 +313,8 @@ def _load_terms(project: Project, terms_dir: Path | None) -> dict:
 
 def _print_result(res) -> None:
     u = res.usage
-    tok = f"  [in {u.get('input_tokens', 0)} + cache {u.get('cache_read_input_tokens', 0)} / out {u.get('output_tokens', 0)}]" if u else ""
+    cost = f", ≈${u['cost_micro_usd'] / 1e6:.3f} list price" if u.get("cost_micro_usd") else ""
+    tok = f"  [out {u.get('output_tokens', 0)} tokens{cost}]" if u else ""
     if res.error:
         typer.secho(f"✗ {res.path}: {res.error}{tok}", fg=typer.colors.RED)
     else:
@@ -338,10 +339,19 @@ def translate(
     collect: Annotated[Optional[str], typer.Option(help="Apply the results of a finished batch.")] = None,
     terms_dir: Annotated[Optional[Path], typer.Option(help="Local atlas terminology/ directory.")] = None,
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Do not ask for confirmation.")] = False,
+    backend: Annotated[Optional[str], typer.Option(help="claude-code (subscription, default) | api (API key).")] = None,
+    model: Annotated[Optional[str], typer.Option(help="Override ai.model, e.g. claude-haiku-4-5.")] = None,
 ) -> None:
     """Annotate pending / stale symbols with Claude (structured patches; code is never edited by the model)."""
     project = _project()
+    ai = project.raw.setdefault("ai", {})
+    if backend:
+        ai["backend"] = backend
+    if model:
+        ai["model"] = model
     cfg = tr_mod.ai_config(project)
+    if batch and cfg["backend"] != "api":
+        die("--batch needs the API backend (--backend api with ANTHROPIC_API_KEY)")
     if collect:
         status_, results = tr_mod.collect_batch(project, collect)
         if status_ != "ended":
@@ -369,7 +379,7 @@ def translate(
         else:
             fresh += file_tok
             seen.add(j.path)
-    typer.echo(f"{len(jobs)} request(s), {len(seen)} file(s), {n_sym} symbol(s) → {cfg['model']} (effort {cfg['effort']})")
+    typer.echo(f"{len(jobs)} request(s), {len(seen)} file(s), {n_sym} symbol(s) → {cfg['model']} via {cfg['backend']} (effort {cfg['effort']})")
     typer.echo(
         f"estimated input ≈ {fresh:,} tokens + {cached:,} cache-read tokens (rough: bytes/3)"
         + (" — batch: 50% price" if batch else "")
@@ -379,13 +389,13 @@ def translate(
         typer.echo(f"  {j.path}  ({kinds})")
     if dry_run:
         raise typer.Exit(0)
-    if not yes and not typer.confirm("Call the Claude API now?"):
+    if not yes and not typer.confirm(f"Run {len(jobs)} request(s) via {cfg['backend']} now?"):
         raise typer.Exit(1)
     if batch:
         bid = tr_mod.submit_batch(project, jobs, terms)
         typer.echo(f"submitted batch {bid}; apply later with `osca translate --collect {bid}`")
         raise typer.Exit(0)
-    results = tr_mod.run(project, jobs, terms, tr_mod.anthropic_caller(), lambda j, r: _print_result(r))
+    results = tr_mod.run(project, jobs, terms, tr_mod.caller_for(project), lambda j, r: _print_result(r))
     done = sum(len(r.applied) for r in results)
     typer.echo(f"\n{done} symbol(s) annotated. Review with `git diff`, then `osca verify` and commit (state already recorded).")
 

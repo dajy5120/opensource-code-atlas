@@ -29,7 +29,7 @@ def test_plan_and_request(study: Path):
     jobs = translate.plan(project, ["src/lib.rs"], all_symbols=True)
     assert [t.sym.qualname for t in jobs[0].targets] == ["<module>", "add", "sub"]
     params = translate.request_params(project, jobs[0], TERMS)
-    assert params["model"] == "claude-opus-5-5"
+    assert params["model"] == "claude-sonnet-5-5"
     assert params["fallbacks"] == "default" and params["betas"] == ["server-side-fallback-2026-07-01"]
     assert params["output_config"]["format"]["type"] == "json_schema"
     file_block, targets_block = params["messages"][0]["content"]
@@ -60,7 +60,7 @@ def test_apply_doc_and_line_annotations(study: Path):
     assert "// 【zh】 减法\npub fn sub(a: i32, b: i32) -> i32 {\n    // 【zh】 直接相减，可能溢出。\n    a - b\n" in text
     assert verify(study, anchor(study)) == []
     recs = state.load(study)
-    assert recs["src/lib.rs#add"]["by"] == "ai:claude-opus-5-5" and recs["src/lib.rs#add"]["review"] is None
+    assert recs["src/lib.rs#add"]["by"] == "ai:claude-sonnet-5-5" and recs["src/lib.rs#add"]["review"] is None
 
 
 def test_replaces_existing_annotation_and_reports_unchanged(study: Path):

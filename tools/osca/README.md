@@ -26,7 +26,7 @@ uv tool install "git+https://github.com/dajy5120/opensource-code-atlas#subdirect
 | `osca terms lint [PATHS]` | 检查 【zh】 行中 `avoid` 的译法（按上下文） |
 | `osca terms validate [DIR]` | 校验术语库 |
 
-`osca translate` 需要 Claude API 凭证（`ANTHROPIC_API_KEY`，或 `ant auth login` 的配置）。
+`osca translate` 默认通过本机 Claude Code（`claude -p`）使用订阅额度；`--backend api` 改用 `ANTHROPIC_API_KEY` 按量计费（支持 `--batch`）。
 
 开发：
 
