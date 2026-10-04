@@ -1,0 +1,57 @@
+# OSCA study-repository template.
+#   uvx copier copy --vcs-ref main gh:dajy5120/opensource-code-atlas <study-repo>
+#   uvx copier update                                   (re-apply template changes later)
+_subdirectory: templates/study-repo
+_answers_file: .osca/copier-answers.yml
+_templates_suffix: .jinja
+
+project_id:
+  type: str
+  help: 项目 ID（与总仓库 projects/<id>.yaml 一致），如 nautilus-trader
+project_name:
+  type: str
+  help: 显示名称，如 NautilusTrader
+upstream_url:
+  type: str
+  help: 上游仓库 URL
+upstream_branch:
+  type: str
+  default: main
+  help: 上游主开发分支
+track:
+  type: str
+  choices: [tags, branch]
+  default: tags
+  help: 跟踪 release tag 还是分支 HEAD
+tag_pattern:
+  type: str
+  default: '^v\d+\.\d+\.\d+$'
+  when: "{{ track == 'tags' }}"
+github_owner:
+  type: str
+  default: dajy5120
+license:
+  type: str
+  help: 上游许可证（SPDX），如 LGPL-3.0
+terminology:
+  type: yaml
+  default: "[general]"
+  help: 加载的术语库，如 [general, rust, trading]
+scope_include:
+  type: yaml
+  default: '["**"]'
+  help: 翻译范围（gitignore 风格 glob 列表）
+scope_exclude:
+  type: yaml
+  default: '["**/tests/**", "**/test/**", "**/benches/**"]'
+build_check:
+  type: str
+  default: ""
+  help: L1 构建检查命令（可留空）
+atlas_repo:
+  type: str
+  default: dajy5120/opensource-code-atlas
+osca_ref:
+  type: str
+  default: main
+  help: CI 安装 osca 时使用的 atlas 分支/标签

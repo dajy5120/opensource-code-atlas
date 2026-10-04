@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dajy5120/opensource-code-atlas/terminology/schema",
+  "title": "OSCA terminology file",
+  "type": "object",
+  "required": ["schema", "domain", "terms"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "osca-terms/v1" },
+    "domain": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "description": { "type": "string" },
+    "terms": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z0-9_]+$" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["en", "zh"],
+        "additionalProperties": false,
+        "properties": {
+          "en": { "type": "string", "minLength": 1 },
+          "zh": { "type": "string", "minLength": 1 },
+          "avoid": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+          "keep_english": { "type": "boolean" },
+          "aliases": { "type": "array", "items": { "type": "string" } },
+          "note": { "type": "string" }
+        }
+      }
+    }
+  }
+}

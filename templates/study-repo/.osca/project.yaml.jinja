@@ -1,0 +1,39 @@
+# OSCA project configuration (hand-maintained). Generated from the copier template;
+# run `uvx copier update` to pick up template changes.
+schema: osca/v1
+project: {{ project_id }}
+name: {{ project_name }}
+osca_version: ">=0.1,<0.2"
+
+upstream:
+  remote: upstream
+  repository: {{ upstream_url }}
+  branch: {{ upstream_branch }}
+  track: {{ track }}
+{%- if track == 'tags' %}
+  tag_pattern: '{{ tag_pattern }}'
+{%- endif %}
+  mirror_branch: mirror/{{ upstream_branch }}
+
+study:
+  branch: study/zh-CN
+  language: zh-CN
+  strategy: inline-comments
+  marker: "[zh]"
+
+license: {{ license }}
+
+scope:
+  include:
+{%- for p in scope_include %}
+    - "{{ p }}"
+{%- endfor %}
+  exclude:
+{%- for p in scope_exclude %}
+    - "{{ p }}"
+{%- endfor %}
+
+terminology: [{{ terminology | join(', ') }}]
+
+build:
+  check: "{{ build_check }}"
