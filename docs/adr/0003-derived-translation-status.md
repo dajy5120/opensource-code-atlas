@@ -11,12 +11,12 @@
 
 状态不存储、不手填，而是由工具从**事实**派生：
 
-- Phase 1（文件级）：文件含 `[zh]` 行 → `translated`，否则 `pending`。
-- Phase 2（符号级）：Tree-sitter 为每个符号计算 `sig` / `doc` / `body` 三个哈希（剔除 `[zh]` 行后）。`.osca/state/symbols.jsonl` 记录“注释写成时”与“审核通过时”的哈希；当前哈希与记录不一致即为 `stale`，审核记录随之失效。
+- Phase 1（文件级）：文件含 `【zh】` 行 → `translated`，否则 `pending`。
+- Phase 2（符号级）：Tree-sitter 为每个符号计算 `sig` / `doc` / `body` 三个哈希（剔除 `【zh】` 行后）。`.osca/state/symbols.jsonl` 记录“注释写成时”与“审核通过时”的哈希；当前哈希与记录不一致即为 `stale`，审核记录随之失效。
 
 | 派生状态 | 条件 |
 |----------|------|
-| pending | 无 `[zh]` 注释 |
+| pending | 无 `【zh】` 注释 |
 | translated | 有注释，注释时哈希 == 当前哈希，无有效审核 |
 | reviewed | 审核时记录的哈希 == 当前哈希 |
 | stale | 注释时哈希 ≠ 当前哈希（并标明 sig / doc / body 哪类变化） |

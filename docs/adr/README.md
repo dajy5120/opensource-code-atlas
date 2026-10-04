@@ -2,7 +2,7 @@
 
 | 编号 | 标题 | 状态 |
 |------|------|------|
-| [0001](0001-zh-marker-and-strip-invariant.md) | `[zh]` 注释标记与剥离不变式 | Accepted |
+| [0001](0001-zh-marker-and-strip-invariant.md) | `【zh】` 注释标记与剥离不变式 | Accepted |
 | [0002](0002-branching-model.md) | 学习仓库分支模型 | Accepted |
 | [0003](0003-derived-translation-status.md) | 派生式翻译状态 | Accepted（Phase 2 实现） |
 

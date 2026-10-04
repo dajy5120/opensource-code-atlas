@@ -1,8 +1,8 @@
-"""Recognising and stripping `[zh]` annotation lines.
+"""Recognising and stripping `【zh】` annotation lines.
 
 An annotation line is a *whole line* consisting of optional indentation, a
 line-comment token valid for the file's language, optional spaces, and the
-marker (default `[zh]`). Trailing comments are deliberately not recognised:
+marker (default `【zh】`). Trailing comments are deliberately not recognised:
 they cannot be stripped back to the exact upstream bytes.
 """
 
@@ -13,7 +13,7 @@ from collections.abc import Iterator
 from functools import cache
 from pathlib import PurePosixPath
 
-DEFAULT_MARKER = "[zh]"
+DEFAULT_MARKER = "【zh】"
 
 _SLASH = ("///", "//!", "//")
 _HASH = ("#",)

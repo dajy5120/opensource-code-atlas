@@ -104,7 +104,7 @@ def render(project: Project, st: Status, show_groups: bool = True) -> str:
         f"{'Files in scope':<18}{t.files:>8,}",
         f"{'Translated':<18}{t.translated:>8,}",
         f"{'Pending':<18}{t.files - t.translated:>8,}",
-        f"{'[zh] lines':<18}{t.zh_lines:>8,}",
+        f"{'zh lines':<18}{t.zh_lines:>8,}",
         "",
         f"Coverage  {t.coverage:.2%}  (by file; symbol-level status arrives in Phase 2)",
     ]

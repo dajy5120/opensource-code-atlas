@@ -1,7 +1,7 @@
 """The strip invariant: strip_zh(study) == upstream@anchor, byte for byte.
 
 Every path that differs between the anchor commit and the working tree must be
-either an OSCA overlay path, or a file whose only additions are `[zh]` lines.
+either an OSCA overlay path, or a file whose only additions are `【zh】` lines.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from pathlib import Path
 import pathspec
 
 from . import gitutil
-from .markers import comment_tokens, first_divergence, strip_text
+from .markers import DEFAULT_MARKER, comment_tokens, first_divergence, strip_text
 
 # Paths OSCA owns outright; anything goes.
 OVERLAY = pathspec.GitIgnoreSpec.from_lines(
@@ -119,12 +119,27 @@ def changed_paths(root: Path, anchor: str) -> dict[str, str]:
 
 
 def verify(
-    root: Path, anchor: str, marker: str = "[zh]", files: list[str] | None = None
+    root: Path,
+    anchor: str,
+    marker: str = DEFAULT_MARKER,
+    files: list[str] | None = None,
+    generated: list[str] | None = None,
 ) -> list[Issue]:
+    """Check the strip invariant.
+
+    `generated` lists gitignore-style patterns of build-generated files (e.g. cbindgen
+    headers rendered from doc comments): they must equal upstream exactly, because a
+    local build copies annotations into them.
+    """
+    gen_spec = pathspec.GitIgnoreSpec.from_lines(generated or [])
     issues: list[Issue] = []
     if not gitutil.try_rev_parse(root, anchor):
         return [Issue(".osca/sync.yaml", "anchor", f"anchor commit {anchor} not found; fetch upstream history")]
-    if not gitutil.is_ancestor(root, anchor, "HEAD"):
+    # During an in-progress sync merge the new anchor is reachable from MERGE_HEAD only.
+    merging = gitutil.try_rev_parse(root, "MERGE_HEAD")
+    if not gitutil.is_ancestor(root, anchor, "HEAD") and not (
+        merging and gitutil.is_ancestor(root, anchor, merging)
+    ):
         issues.append(
             Issue(".osca/sync.yaml", "anchor", f"anchor {anchor[:12]} is not an ancestor of HEAD")
         )
@@ -148,7 +163,14 @@ def verify(
             if study is None:
                 issues.append(Issue(path, "deleted", "upstream file was deleted"))
                 continue
-            if path == CLAUDE_MD:
+            if gen_spec.match_file(path):
+                issue = None if study == upstream else Issue(
+                    path,
+                    "generated",
+                    "build-generated file differs from upstream (a local build copied annotations "
+                    f"into it); restore with `git checkout {anchor[:12]} -- {path}`",
+                )
+            elif path == CLAUDE_MD:
                 issue = _check_claude_md(path, study, upstream)
             else:
                 issue = _check_modified(path, study, upstream, marker)

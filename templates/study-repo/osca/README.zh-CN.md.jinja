@@ -2,14 +2,14 @@
 
 > 本仓库是 [{{ project_name }}]({{ upstream_url }}) 的**非官方**中文源码学习版本，属于
 > [OpenSource Code Atlas](https://github.com/{{ atlas_repo }}) 项目。
-> 上游代码保持原样（许可证：{{ license }}，见根目录 LICENSE），仅增加以 `[zh]` 开头的中文注释；
+> 上游代码保持原样（许可证：{{ license }}，见根目录 LICENSE），仅增加以 `【zh】` 开头的中文注释；
 > 所有版权归上游作者所有。
 
 ## 分支
 
 | 分支 | 内容 |
 |------|------|
-| `study/zh-CN`（默认） | 上游源码 + `[zh]` 中文注释 + 分析文档 |
+| `study/zh-CN`（默认） | 上游源码 + `【zh】` 中文注释 + 分析文档 |
 | `mirror/{{ upstream_branch }}` | 官方原始源码镜像 |
 | `exp/*` | 实验分支 |
 
@@ -29,6 +29,6 @@
 ## 如何查看去掉中文注释后的原文
 
 ```bash
-git diff mirror/{{ upstream_branch }} -- <path>     # 只会看到 [zh] 行
+git diff mirror/{{ upstream_branch }} -- <path>     # 只会看到 【zh】 行
 osca strip <path>                                   # 输出剥离后的源码
 ```

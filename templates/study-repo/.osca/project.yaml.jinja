@@ -19,7 +19,10 @@ study:
   branch: study/zh-CN
   language: zh-CN
   strategy: inline-comments
-  marker: "[zh]"
+  marker: "【zh】"
+  # Build-generated tracked files (e.g. cbindgen output rendered from doc comments).
+  # They must stay byte-identical to upstream.
+  generated: []
 
 license: {{ license }}
 
@@ -37,3 +40,5 @@ terminology: [{{ terminology | join(', ') }}]
 
 build:
   check: "{{ build_check }}"
+  # Doc builds catch annotation problems that `check` cannot (e.g. rustdoc link lints).
+  doc: ""

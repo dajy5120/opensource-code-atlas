@@ -14,7 +14,7 @@ def release_v2(upstream: Path, lib: str = LIB_V2) -> None:
 
 
 def annotate(study: Path) -> None:
-    (study / "src/lib.rs").write_text("/// [zh] 加法\n" + LIB_V1)
+    (study / "src/lib.rs").write_text("/// 【zh】 加法\n" + LIB_V1)
     commit_all(study, "zh: lib")
 
 
@@ -44,15 +44,17 @@ def test_sync_clean_merge(study: Path, upstream: Path, runner):
 
 def test_sync_conflict_then_continue(study: Path, upstream: Path, runner):
     # annotation sits right where upstream changes -> conflict
-    (study / "src/lib.rs").write_text(LIB_V1.replace("    a - b\n", "    // [zh] 相减\n    a - b\n"))
+    (study / "src/lib.rs").write_text(LIB_V1.replace("    a - b\n", "    // 【zh】 相减\n    a - b\n"))
     commit_all(study, "zh")
     release_v2(upstream)
     res = runner.invoke(app, ["sync"])
     assert res.exit_code == 1 and "src/lib.rs" in res.output
     assert runner.invoke(app, ["sync"]).exit_code == 1  # already in progress
 
-    (study / "src/lib.rs").write_text(LIB_V2.replace("    a.saturating", "    // [zh] 饱和减法\n    a.saturating"))
+    (study / "src/lib.rs").write_text(LIB_V2.replace("    a.saturating", "    // 【zh】 饱和减法\n    a.saturating"))
     git(study, "add", "src/lib.rs")
+    # mid-merge: the new anchor is only reachable through MERGE_HEAD
+    assert runner.invoke(app, ["verify", "--anchor", "v1.1.0", "src/lib.rs"]).exit_code == 0
     res = runner.invoke(app, ["sync", "--continue"])
     assert res.exit_code == 0, res.output
     assert "strip invariant holds" in res.output
@@ -61,7 +63,7 @@ def test_sync_conflict_then_continue(study: Path, upstream: Path, runner):
 
 def test_sync_refuses_dirty_tree(study: Path, upstream: Path, runner):
     release_v2(upstream)
-    (study / "src/lib.rs").write_text("// [zh] x\n" + LIB_V1)
+    (study / "src/lib.rs").write_text("// 【zh】 x\n" + LIB_V1)
     res = runner.invoke(app, ["sync"])
     assert res.exit_code == 1 and "uncommitted" in res.output
 
@@ -75,3 +77,12 @@ def test_status(study: Path, runner):
     assert data["files"] == {"in_scope": 2, "translated": 1, "pending": 1}
     assert data["zh_lines"] == 1
     assert (study / ".osca/status.json").exists()
+
+
+def test_sync_auto_resolves_claude_md(study: Path, upstream: Path, runner):
+    (upstream / "CLAUDE.md").write_text("# upstream rules v2\n")
+    release_v2(upstream)
+    res = runner.invoke(app, ["sync"])
+    assert res.exit_code == 0, res.output
+    assert (study / "CLAUDE.md").read_text() == "# upstream rules v2\n\n@.osca/CLAUDE.md\n"
+    assert "strip invariant holds" in res.output

@@ -8,7 +8,7 @@
 | 分支 | 含义 | 写入方式 |
 |------|------|---------|
 | `mirror/<upstream-branch>` | 官方源码镜像 | 仅 `osca sync` fast-forward |
-| `study/zh-CN` | 默认分支：上游 + `[zh]` 注释 + OSCA 元数据 | 只通过 PR |
+| `study/zh-CN` | 默认分支：上游 + `【zh】` 注释 + OSCA 元数据 | 只通过 PR |
 | `sync/<ref>` | 一次上游同步 | `osca sync` 生成，PR 必须 **merge commit** |
 | `tr/<scope>` | 翻译工作 | PR，可 squash |
 | `exp/<category>/<name>` | 实验（architecture / performance / api / strategy / prototype） | 自由修改，永不合回 |

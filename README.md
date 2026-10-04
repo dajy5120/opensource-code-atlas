@@ -9,7 +9,7 @@
 ## 核心原则
 
 - **保留上游原始源码**：`mirror/*` 分支永远等于官方源码。
-- **中文注释直接写在源码里**：`study/zh-CN` = 上游源码 + 独占一行的 `[zh]` 注释。
+- **中文注释直接写在源码里**：`study/zh-CN` = 上游源码 + 独占一行的 `【zh】` 注释。
 - **代码一个字节都不改**：`strip_zh(study) == upstream@anchor`，由 `osca verify` 在 CI 与 Claude Code hook 中强制检查。
 - **持续跟随上游**：记录锚点提交，按 release tag 增量同步，自动报告需要复核的注释。
 - **架构分析用 Markdown**：放在学习仓库的 `osca/docs/`。

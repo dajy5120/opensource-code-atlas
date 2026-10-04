@@ -37,6 +37,7 @@ class Project:
     marker: str
     include: list[str] = field(default_factory=list)
     exclude: list[str] = field(default_factory=list)
+    generated: list[str] = field(default_factory=list)
 
     @property
     def scope(self) -> pathspec.GitIgnoreSpec:
@@ -46,8 +47,16 @@ class Project:
     def scope_exclude(self) -> pathspec.GitIgnoreSpec:
         return pathspec.GitIgnoreSpec.from_lines(self.exclude)
 
+    @property
+    def generated_spec(self) -> pathspec.GitIgnoreSpec:
+        return pathspec.GitIgnoreSpec.from_lines(self.generated)
+
     def in_scope(self, path: str) -> bool:
-        return self.scope.match_file(path) and not self.scope_exclude.match_file(path)
+        return (
+            self.scope.match_file(path)
+            and not self.scope_exclude.match_file(path)
+            and not self.generated_spec.match_file(path)
+        )
 
 
 def find_project_root(start: Path) -> Path | None:
@@ -80,6 +89,7 @@ def load_project(root: Path) -> Project:
             marker=study.get("marker", DEFAULT_MARKER),
             include=list(scope.get("include", ["**"])),
             exclude=list(scope.get("exclude", [])),
+            generated=list(study.get("generated", [])),
         )
     except KeyError as e:
         raise ConfigError(f"{PROJECT_FILE}: missing required key {e}") from e

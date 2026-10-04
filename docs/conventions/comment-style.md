@@ -4,27 +4,31 @@
 
 ## 1. 格式（硬性）
 
-1. **独占一行**，以 `[zh]` 开头：`// [zh] …`、`/// [zh] …`、`# [zh] …`。多行说明每一行都带标记。
-2. **禁止行尾注释**：`let x = 1; // [zh] …` ✗
+1. **独占一行**，以全角 `【zh】` 开头（中文输入法下按 `[` `]`；不要用 ASCII `[zh]`——rustdoc 会把它当成文档链接而报错，见 ADR 0001 修订）：`// 【zh】 …`、`/// 【zh】 …`、`# 【zh】 …`。多行说明每一行都带标记。
+2. **禁止行尾注释**：`let x = 1; // 【zh】 …` ✗
 3. **禁止插入**字符串、原始字符串、docstring、rustdoc 代码块（```）内部。
 4. **只增不改**：不修改、删除、移动任何上游行，包括空白、空行和英文注释。
-5. **不运行格式化器**：学习分支上不要运行 rustfmt / ruff / black / pre-commit，也不要 `pre-commit install`。
+5. **构建生成文件不提交**：有些项目的构建脚本会把文档注释渲染进被 git 跟踪的文件（如 NautilusTrader 的
+   cbindgen 生成 `nautilus_trader/core/includes/*.h`、`core/rust/*.pxd`）。这些路径登记在
+   `.osca/project.yaml` 的 `study.generated` 中，`osca verify` 要求它们与上游逐字节一致；本地构建后用
+   `git checkout -- <path>` 恢复。
+6. **不运行格式化器**：学习分支上不要运行 rustfmt / ruff / black / pre-commit，也不要 `pre-commit install`。
 
 ## 2. 放置位置
 
 ### Rust
 
-- 条目（struct / enum / fn / trait / impl / mod）有英文 `///` 文档时：把 `/// [zh]` 行**追加在英文文档之后、`#[...]` 属性之前**，这样 IDE 悬停能同时看到中英文。
-- 条目没有英文文档、或位于函数体内部：使用 `// [zh]`（避免 `unused_doc_comments` lint 与 “doc comment 后无条目” 编译错误）。
-- 模块级说明：在文件开头的 `//!` 文档之后追加 `//! [zh]`。
+- 条目（struct / enum / fn / trait / impl / mod）有英文 `///` 文档时：把 `/// 【zh】` 行**追加在英文文档之后、`#[...]` 属性之前**，这样 IDE 悬停能同时看到中英文。
+- 条目没有英文文档、或位于函数体内部：使用 `// 【zh】`（避免 `unused_doc_comments` lint 与 “doc comment 后无条目” 编译错误）。
+- 模块级说明：在文件开头的 `//!` 文档之后追加 `//! 【zh】`。
 
 ```rust
 /// Provides an order book which can handle L1/L2/L3 granularity data.
-/// [zh] 订单簿（Order Book）：维护单个交易品种的买卖盘口，
-/// [zh] 支持 L1（最优报价）/ L2（按价位聚合）/ L3（逐笔订单）三种粒度。
+/// 【zh】 订单簿（Order Book）：维护单个交易品种的买卖盘口，
+/// 【zh】 支持 L1（最优报价）/ L2（按价位聚合）/ L3（逐笔订单）三种粒度。
 #[derive(Clone, Debug)]
 pub struct OrderBook {
-    // [zh] 卖盘按价格升序排列，因此第一个价位就是最优卖价。
+    // 【zh】 卖盘按价格升序排列，因此第一个价位就是最优卖价。
     pub asks: BookLadder,
 ```
 
@@ -34,7 +38,7 @@ pub struct OrderBook {
 - 说明写在 `def` / `class` / `cdef class` **及其装饰器之上**；函数体内写在被说明语句之上。
 
 ```python
-# [zh] 风险引擎：所有订单在送达执行引擎前都要经过这里的事前风控（Pre-trade Risk）检查。
+# 【zh】 风险引擎：所有订单在送达执行引擎前都要经过这里的事前风控（Pre-trade Risk）检查。
 @cython.final
 cdef class RiskEngine(Component):
 ```
@@ -42,11 +46,11 @@ cdef class RiskEngine(Component):
 ## 3. 内容
 
 1. **翻译 + 讲解**，不是逐句直译。优先回答：这段代码**为什么**这样写？在系统中处于什么位置？有哪些不变式、边界情况？
-2. **不复述代码**：`// [zh] i 加 1` ✗
+2. **不复述代码**：`// 【zh】 i 加 1` ✗
 3. **术语**以 `terminology/` 为准。首次出现写 `中文（English）`，之后可只写中文；`keep_english: true` 的词保留英文（trait、crate、Future、panic…）。注意 `avoid` 列表中的误译。
-4. **长度**：单个条目的注释一般不超过 8 行；更长的分析写进 `osca/docs/`，在注释中引用：`// [zh] 详见 osca/docs/flows/order-lifecycle.md`。
+4. **长度**：单个条目的注释一般不超过 8 行；更长的分析写进 `osca/docs/`，在注释中引用：`// 【zh】 详见 osca/docs/flows/order-lifecycle.md`。
 5. **语气**：陈述句，中文标点，中英文之间加空格，代码标识符用反引号：`` `apply_delta` ``。
-6. **不确定就标注**：`// [zh] 推测：…（待确认）`，Review 时重点检查。
+6. **不确定就标注**：`// 【zh】 推测：…（待确认）`，Review 时重点检查。
 
 ## 4. 优先级
 

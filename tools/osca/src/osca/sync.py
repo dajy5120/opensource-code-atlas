@@ -3,7 +3,7 @@
 Phase 1 handles the no-conflict path automatically. On conflicts it stops,
 records its state in .git/osca-sync.json, and `osca sync --continue` finishes
 the job once the conflicts are resolved by hand (upstream code always wins;
-re-attach the [zh] lines).
+re-attach the 【zh】 lines).
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from pathlib import Path
 from . import gitutil, status
 from .markers import comment_tokens, count_annotations
 from .project import REPORTS_DIR, SYNC_FILE, STATUS_FILE, Project, load_sync, write_sync
-from .verify import verify
+from .verify import CLAUDE_IMPORT, CLAUDE_MD, verify
 
 DEP_FILES = re.compile(
     r"(^|/)(Cargo\.toml|Cargo\.lock|pyproject\.toml|uv\.lock|poetry\.lock|requirements[^/]*\.txt|go\.mod|go\.sum|package\.json)$"
@@ -119,7 +119,22 @@ def start(project: Project, p: Plan) -> bool:
     gitutil.git(root, "switch", "-c", p.branch, project.study_branch)
     _state_path(root).write_text(json.dumps(asdict(p)), encoding="utf-8")
     msg = f"sync: upstream {p.label}\n\nupstream-commit: {p.new_commit}"
-    return gitutil.git_ok(root, "merge", "--no-ff", "--no-edit", "-m", msg, p.new_commit)
+    if gitutil.git_ok(root, "merge", "--no-ff", "--no-edit", "-m", msg, p.new_commit):
+        return True
+    if CLAUDE_MD in conflicts(root):
+        _resolve_claude_md(root, p.new_commit)
+    return not conflicts(root)
+
+
+def _resolve_claude_md(root: Path, upstream: str) -> None:
+    """Upstream CLAUDE.md wins; re-append the OSCA import line."""
+    blob = gitutil.git_bytes(root, "cat-file", "-p", f"{upstream}:{CLAUDE_MD}", check=False)
+    text = blob.decode("utf-8")
+    if text and not text.endswith("\n"):
+        text += "\n"
+    text = f"{text}\n{CLAUDE_IMPORT}\n" if text else f"{CLAUDE_IMPORT}\n"
+    (root / CLAUDE_MD).write_text(text, encoding="utf-8")
+    gitutil.git(root, "add", CLAUDE_MD)
 
 
 def conflicts(root: Path) -> list[str]:
@@ -162,7 +177,7 @@ def finish(project: Project, p: Plan) -> tuple[Path, list[str]]:
     write_sync(root, data)
     status.write_json(project, status.compute(project))
 
-    issues = verify(root, p.new_commit, project.marker)
+    issues = verify(root, p.new_commit, project.marker, generated=project.generated)
     gitutil.git(root, "add", SYNC_FILE, STATUS_FILE, report_rel)
     gitutil.git(root, "commit", "-m", f"osca: anchor → {p.new_ref}, sync report")
     _state_path(root).unlink(missing_ok=True)
@@ -190,7 +205,7 @@ def _numstat(root: Path, a: str, b: str) -> dict[str, tuple[str, str]]:
 
 
 def _affected(project: Project, p: Plan) -> dict[str, int]:
-    """Upstream-changed files that carry [zh] lines on the study branch -> line count."""
+    """Upstream-changed files that carry 【zh】 lines on the study branch -> line count."""
     root = project.root
     changed = _numstat(root, p.old_commit, p.new_commit)
     res: dict[str, int] = {}
@@ -241,7 +256,7 @@ def write_report(project: Project, p: Plan) -> str:
         "",
     ]
     if affected:
-        out += ["| 文件 | 状态 | 上游变化 | [zh] 行数 |", "|---|---|---|---|"]
+        out += ["| 文件 | 状态 | 上游变化 | 【zh】 行数 |", "|---|---|---|---|"]
         for f in sorted(affected):
             a, d = numstat[f]
             out.append(f"| `{f}` | {status_by_path.get(f, '?')} | +{a} / −{d} | {affected[f]} |")

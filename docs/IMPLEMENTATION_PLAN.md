@@ -13,7 +13,7 @@
 
 | # | 决策 | 理由 |
 |---|------|------|
-| D1 | 所有中文注释必须是**独占一行、带 `[zh]` 标记**的注释行 | 让“学习版 = 上游源码 + 若干 `[zh]` 行”成为一个**可机器验证的不变式** |
+| D1 | 所有中文注释必须是**独占一行、带 `【zh】` 标记**的注释行 | 让“学习版 = 上游源码 + 若干 `【zh】` 行”成为一个**可机器验证的不变式** |
 | D2 | **剥离不变式**：`strip_zh(study) == upstream@anchor`（逐字节） | 比“能编译”强得多：直接证明代码一个字节都没改 |
 | D3 | upstream 更新用 **merge**（不用 rebase），sync PR **禁止 squash** | 保留上游提交祖先关系，`merge-base` 即锚点；squash 会导致下次同步全量冲突 |
 | D4 | 镜像分支命名为 `mirror/<branch>`，不使用 `upstream/main` | `upstream/main` 与远程跟踪引用 `refs/remotes/upstream/main` 同名，Git 会报 ambiguous refname |
@@ -39,7 +39,7 @@
    osca-nautilus-trader   osca-tokio   osca-polars   osca-duckdb   ...（每项目一个独立仓库）
    ┌───────────────────────────────────────────────────────────────────────────────┐
    │ mirror/develop   ── 官方原始源码（只 fast-forward，永不手改）                      │
-   │ study/zh-CN      ── 官方源码 + [zh] 中文注释 + .osca/ 元数据 + osca/ 分析文档       │
+   │ study/zh-CN      ── 官方源码 + 【zh】 中文注释 + .osca/ 元数据 + osca/ 分析文档       │
    │ sync/*           ── 每次上游同步的临时分支（PR → study/zh-CN）                     │
    │ tr/*             ── 翻译工作分支（PR → study/zh-CN）                               │
    │ exp/*            ── 实验分支（从 study 分出，永不合回）                             │
@@ -55,7 +55,7 @@ upstream 新 tag
 符号索引对比              Tree-sitter 解析 old/new 两个版本，按哈希比对
    │ osca impact
    ▼
-CHANGE_ANALYSIS.md       新增/删除/修改/重命名/签名变化 的符号列表 + 受影响的 [zh] 注释
+CHANGE_ANALYSIS.md       新增/删除/修改/重命名/签名变化 的符号列表 + 受影响的 【zh】 注释
    │ osca translate      仅针对 stale + new 的符号，AI 输出 JSON 注释补丁
    ▼
 osca verify              剥离不变式 + 注释位置 lint + 术语 lint（秒级）
@@ -140,7 +140,7 @@ onboarded: 2026-10-04
 
 ```
 osca-nautilus-trader/  （study/zh-CN 分支视图）
-├── <上游全部源码，保持原样，仅插入 [zh] 注释行>
+├── <上游全部源码，保持原样，仅插入 【zh】 注释行>
 ├── CLAUDE.md                    # 若上游没有则新增；若上游已有，只在末尾追加一行 @.osca/CLAUDE.md
 ├── .osca/                       # OSCA 元数据（机器 + 人）
 │   ├── project.yaml             # 配置（人工维护）
@@ -170,7 +170,7 @@ osca-nautilus-trader/  （study/zh-CN 分支视图）
 
 ```
 .osca/**   osca/**   .claude/**（仅 OSCA 新增文件）   .github/workflows/osca-*.yml
-CLAUDE.md（新增或仅追加一行 import）   以及任意文件中的 [zh] 注释行
+CLAUDE.md（新增或仅追加一行 import）   以及任意文件中的 【zh】 注释行
 ```
 
 ---
@@ -207,43 +207,43 @@ GitHub 仓库设置：默认分支设为 `study/zh-CN`；开启 merge commit；�
 
 ### 4.1 标记格式
 
-每一行中文注释都**独占一行**，注释体以 `[zh]` 开头：
+每一行中文注释都**独占一行**，注释体以 `【zh】` 开头：
 
 **Rust**
 
 ```rust
 /// Provides an order book which can handle L1/L2/L3 granularity data.
-/// [zh] 订单簿（Order Book）：维护单个交易品种的买卖盘口，
-/// [zh] 支持 L1（最优价）/L2（按价位聚合）/L3（逐笔订单）三种粒度。
+/// 【zh】 订单簿（Order Book）：维护单个交易品种的买卖盘口，
+/// 【zh】 支持 L1（最优价）/L2（按价位聚合）/L3（逐笔订单）三种粒度。
 #[derive(Clone, Debug)]
 pub struct OrderBook {
-    // [zh] 卖盘按价格升序排列，因此 asks.top() 即最优卖价。
+    // 【zh】 卖盘按价格升序排列，因此 asks.top() 即最优卖价。
     pub asks: BookLadder,
 ```
 
 **Python / Cython**
 
 ```python
-# [zh] 风险引擎：所有订单在送达执行引擎前必须经过此处的事前风控检查。
-# [zh] 若交易状态为 HALTED，会直接拒绝所有新订单。
+# 【zh】 风险引擎：所有订单在送达执行引擎前必须经过此处的事前风控检查。
+# 【zh】 若交易状态为 HALTED，会直接拒绝所有新订单。
 @cython.final
 cdef class RiskEngine(Component):
 ```
 
 ### 4.2 放置规则（由 `osca lint` 用 Tree-sitter 强制检查）
 
-1. **禁止行尾注释**：`let x = 1; // [zh] ...` 不允许——否则剥离时无法做到逐字节还原。
+1. **禁止行尾注释**：`let x = 1; // 【zh】 ...` 不允许——否则剥离时无法做到逐字节还原。
 2. **禁止插入字符串/原始字符串/文档字符串内部**：插入多行字符串的行会改变字符串值，剥离检查却能通过，这是剥离不变式唯一的盲区，必须由 AST 检查兜底。
 3. **禁止插入 rustdoc 代码块（```）内部**：会改变 doctest。
-4. Rust 中 `/// [zh]` 只能追加在**已有 English `///` 文档块之后、属性 `#[...]` 之前**；其他位置一律用 `// [zh]`（避免 `unused_doc_comments` 等 lint 及“doc comment 后无条目”的编译错误）。
-5. Python 中**不修改 docstring**（会改变运行时 `__doc__`），中文说明一律以 `# [zh]` 写在 `def/class` 及其装饰器**之上**。
+4. Rust 中 `/// 【zh】` 只能追加在**已有 English `///` 文档块之后、属性 `#[...]` 之前**；其他位置一律用 `// 【zh】`（避免 `unused_doc_comments` 等 lint 及“doc comment 后无条目”的编译错误）。
+5. Python 中**不修改 docstring**（会改变运行时 `__doc__`），中文说明一律以 `# 【zh】` 写在 `def/class` 及其装饰器**之上**。
 6. 学习分支上**禁止运行格式化器**（rustfmt / ruff / pre-commit），不要 `pre-commit install`——格式化器可能重排注释或代码。
 
 ### 4.3 内容风格（`docs/conventions/comment-style.md` 详述）
 
 - 不是逐句直译，而是**“翻译 + 讲解”**：说明这段代码**为什么**这样做、在系统中处于什么位置、有什么不变式/边界条件。
 - 术语首次出现写成 `中文（English）`，之后可只用中文；`terminology` 标记 `keep_english: true` 的词（如 trait、future、lifetime）保留英文。
-- 不复述代码（避免 `// [zh] i 加 1`）；单个符号注释一般不超过 8 行，更长的分析放进 `osca/docs/` 并在注释中引用：`// [zh] 详见 osca/docs/flows/order-lifecycle.md`。
+- 不复述代码（避免 `// 【zh】 i 加 1`）；单个符号注释一般不超过 8 行，更长的分析放进 `osca/docs/` 并在注释中引用：`// 【zh】 详见 osca/docs/flows/order-lifecycle.md`。
 
 ### 4.4 剥离不变式（`osca verify` 的核心）
 
@@ -282,7 +282,7 @@ study:
   branch: study/zh-CN
   language: zh-CN
   strategy: inline-comments
-  marker: "[zh]"
+  marker: "【zh】"
 
 scope:                            # 翻译范围：先聚焦核心，不追求全覆盖
   include:
@@ -347,7 +347,7 @@ nautilus_trader/risk/engine.pyx#RiskEngine._check_order
 
 同名冲突（如 `#[cfg]` 变体）追加序号 `~2`。
 
-每个符号计算三个哈希（计算前剔除所有 `[zh]` 行、归一化空白）：
+每个符号计算三个哈希（计算前剔除所有 `【zh】` 行、归一化空白）：
 
 | 哈希 | 内容 | 变化意味着 |
 |------|------|-----------|
@@ -364,11 +364,11 @@ nautilus_trader/risk/engine.pyx#RiskEngine._check_order
 **状态是派生出来的**，不存储，不手填：
 
 ```
-无 [zh] 注释                                   → pending
-有 [zh]，且注释时的 sig/doc/body ≠ 当前          → stale（needs_review），并标出是哪类变化
-有 [zh]，哈希一致，无有效人工审核               → translated（AI 或人工初稿）
-有 [zh]，且审核时记录的 4 个哈希全部与当前一致    → reviewed
-符号已被上游删除，但 [zh] 注释残留               → orphaned（同步时自动报告）
+无 【zh】 注释                                   → pending
+有 【zh】，且注释时的 sig/doc/body ≠ 当前          → stale（needs_review），并标出是哪类变化
+有 【zh】，哈希一致，无有效人工审核               → translated（AI 或人工初稿）
+有 【zh】，且审核时记录的 4 个哈希全部与当前一致    → reviewed
+符号已被上游删除，但 【zh】 注释残留               → orphaned（同步时自动报告）
 ```
 
 这样“人工审核过的注释”在上游改动后会**自动失效**为 stale，无需任何人记得去改状态。
@@ -409,11 +409,11 @@ uv tool install "git+https://github.com/dajy5120/opensource-code-atlas#subdirect
 |------|---------|------|
 | `osca new <id> --upstream <url>` | 总仓库 | 登记项目 → 创建 GitHub 仓库 → 推送上游历史 → copier 生成 `.osca/` 等 → 建立初始索引 |
 | `osca sync [--to <ref>]` | 学习仓库 | fetch → ff mirror → 建 `sync/*` 分支 → merge → `resolve` → `impact` → `verify` → 开 PR |
-| `osca resolve` | 学习仓库 | 自动解冲突：冲突块取上游版本，再按符号把 `[zh]` 行重新挂回仍然存在的符号；挂不回去的标 orphaned |
+| `osca resolve` | 学习仓库 | 自动解冲突：冲突块取上游版本，再按符号把 `【zh】` 行重新挂回仍然存在的符号；挂不回去的标 orphaned |
 | `osca impact <a>..<b>` | 学习仓库 | 生成 CHANGE_ANALYSIS 报告（符号级 diff + 受影响注释 + 受影响分析文档） |
 | `osca index` | 学习仓库 | 重建符号索引与哈希 |
 | `osca verify [--files ...]` | 学习仓库 | 剥离不变式 + 注释位置 lint + 术语 lint + overlay 白名单 |
-| `osca strip [--out dir]` | 学习仓库 | 输出去掉 `[zh]` 的源码（调试用） |
+| `osca strip [--out dir]` | 学习仓库 | 输出去掉 `【zh】` 的源码（调试用） |
 | `osca status [--json]` | 学习仓库 | 统计（§5.5） |
 | `osca queue [--stale] [--path ..]` | 学习仓库 | 列出待翻译/待复核的符号，按优先级排序 |
 | `osca translate <path\|symbol\|--queue N>` | 学习仓库 | 调用 AI 生成 JSON 注释补丁并应用（§7） |
@@ -438,7 +438,7 @@ git add .osca && git commit -m "osca: update index & report for $TARGET_REF"
 gh pr create --base study/zh-CN --body-file .osca/reports/sync-....md
 ```
 
-冲突的本质：我们只加了 `[zh]` 行，所以冲突必然是“上游改动的位置附近有中文注释”。`osca resolve` 的策略因此可以是确定性的——**上游代码永远赢，中文注释重新挂载或标记过时**，不需要人工逐个解冲突。
+冲突的本质：我们只加了 `【zh】` 行，所以冲突必然是“上游改动的位置附近有中文注释”。`osca resolve` 的策略因此可以是确定性的——**上游代码永远赢，中文注释重新挂载或标记过时**，不需要人工逐个解冲突。
 
 ### 6.2 CHANGE_ANALYSIS 报告样例
 
@@ -485,14 +485,14 @@ AI **不直接编辑文件**，只返回 JSON：
     {
       "symbol": "impl OrderBook::apply_delta",
       "placement": "doc_append",
-      "lines": ["[zh] 应用单条盘口增量（delta）：根据 action 执行新增/更新/删除。",
-                "[zh] 注意：sequence 必须单调递增，否则视为乱序数据。"]
+      "lines": ["【zh】 应用单条盘口增量（delta）：根据 action 执行新增/更新/删除。",
+                "【zh】 注意：sequence 必须单调递增，否则视为乱序数据。"]
     },
     {
       "symbol": "impl OrderBook::apply_delta",
       "placement": "before_line",
       "anchor_text": "match delta.action {",
-      "lines": ["[zh] 四种动作中 Clear 会清空整个盘口，常见于快照重建。"]
+      "lines": ["【zh】 四种动作中 Clear 会清空整个盘口，常见于快照重建。"]
     }
   ],
   "terms_used": ["order_book", "delta"]
@@ -550,12 +550,12 @@ status: reviewed
 ```markdown
 # OSCA 学习仓库规则（硬性）
 
-本仓库 = 上游源码 + `[zh]` 中文注释。你的工作只允许：
-1. 插入独占一行、以 `// [zh]`、`/// [zh]` 或 `# [zh]` 开头的注释行；
+本仓库 = 上游源码 + `【zh】` 中文注释。你的工作只允许：
+1. 插入独占一行、以 `// 【zh】`、`/// 【zh】` 或 `# 【zh】` 开头的注释行；
 2. 修改/新增 `.osca/`、`osca/` 下的文件。
 
 绝对禁止：
-- 修改、删除、移动任何非 `[zh]` 行（包括空白、格式、英文注释、docstring）；
+- 修改、删除、移动任何非 `【zh】` 行（包括空白、格式、英文注释、docstring）；
 - 行尾注释；在字符串、docstring、rustdoc 代码块内插入；
 - 运行 rustfmt / ruff / pre-commit 等格式化工具；
 - 在 `mirror/*` 分支上提交；向上游仓库发 PR。
@@ -639,7 +639,7 @@ terms:
 机制：
 
 - 优先级：项目级 `.osca/terminology.yaml` > 领域术语 > `general.yml`；
-- `osca terms lint` 检查 `[zh]` 行中的 `avoid` 用词，进入 L0 CI；
+- `osca terms lint` 检查 `【zh】` 行中的 `avoid` 用词，进入 L0 CI；
 - 术语变更时 `osca terms find fill` 列出所有项目中受影响的注释，可批量生成修订 PR；
 - 术语库本身有 JSON Schema 校验，避免格式错误。
 
@@ -674,7 +674,7 @@ Rust
 ### Phase 0 · 基础规范（第 1 周）
 
 - 初始化 `opensource-code-atlas` 目录骨架、README、CLAUDE.md
-- 写 ADR：0001 `[zh]` 标记与剥离不变式、0002 分支模型、0003 状态派生模型
+- 写 ADR：0001 `【zh】` 标记与剥离不变式、0002 分支模型、0003 状态派生模型
 - 写 `comment-style.md`、`branching.md`
 - 种子术语库：general / rust / python / trading 各 30～50 条
 - **验收**：规范文档评审通过；手工在 2 个 Rust 文件 + 1 个 pyx 文件上试写注释，确认规范可执行

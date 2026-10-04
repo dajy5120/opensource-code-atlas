@@ -26,7 +26,7 @@ from .project import (
 from .verify import CLAUDE_IMPORT, CLAUDE_MD, verify as run_verify
 
 app = typer.Typer(
-    help="OpenSource Code Atlas: upstream tracking and [zh] annotation tooling.",
+    help="OpenSource Code Atlas: upstream tracking and 【zh】 annotation tooling.",
     no_args_is_help=True,
     add_completion=False,
 )
@@ -101,6 +101,13 @@ def init(
             claude.write_text(f"{text}{sep}\n{CLAUDE_IMPORT}\n", encoding="utf-8")
             typer.echo(f"appended   {CLAUDE_IMPORT} to upstream {CLAUDE_MD}")
 
+    ignored = gitutil.git(root, "check-ignore", CLAUDE_MD, ".claude/settings.json", check=False).split()
+    if ignored:
+        typer.secho(
+            f"note       upstream .gitignore ignores {', '.join(ignored)}; add with `git add -f`",
+            fg=typer.colors.YELLOW,
+        )
+
 
 def _hook_files(root: Path) -> list[str] | None:
     """Extract the edited file from a Claude Code PostToolUse payload on stdin."""
@@ -147,7 +154,7 @@ def verify(
         ref = anchor or anchor_commit(root)
     except ConfigError as e:
         die(str(e))
-    issues = run_verify(root, ref, project.marker, files)
+    issues = run_verify(root, ref, project.marker, files, project.generated)
     if not issues:
         if not hook:
             scope = f"{len(files)} file(s)" if files else "working tree"
@@ -156,7 +163,7 @@ def verify(
     out = "\n".join(i.format() for i in issues)
     if hook:
         print(
-            "OSCA verify failed: only whole-line `[zh]` comments may be added to upstream files.\n"
+            "OSCA verify failed: only whole-line `【zh】` comments may be added to upstream files.\n"
             f"{out}\nRevert the non-annotation change.",
             file=sys.stderr,
         )
@@ -170,9 +177,9 @@ def verify(
 def strip(
     files: Annotated[list[Path], typer.Argument(help="Files to strip.")],
     out: Annotated[Optional[Path], typer.Option(help="Write stripped files under this directory instead of stdout.")] = None,
-    marker: Annotated[str, typer.Option()] = "[zh]",
+    marker: Annotated[str, typer.Option()] = "【zh】",
 ) -> None:
-    """Print files with all [zh] annotation lines removed."""
+    """Print files with all 【zh】 annotation lines removed."""
     for f in files:
         tokens = comment_tokens(f.as_posix())
         text = f.read_text(encoding="utf-8")
@@ -235,7 +242,7 @@ def sync(
                 for f in files:
                     typer.echo(f"  {f}")
                 typer.echo(
-                    "\nResolve them with upstream code winning, keep/re-attach the [zh] lines,\n"
+                    "\nResolve them with upstream code winning, keep/re-attach the 【zh】 lines,\n"
                     "`git add` the files, then run `osca sync --continue`."
                 )
                 raise typer.Exit(1)

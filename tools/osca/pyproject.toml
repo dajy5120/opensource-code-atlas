@@ -1,7 +1,7 @@
 [project]
 name = "osca"
 version = "0.1.0"
-description = "OpenSource Code Atlas CLI: upstream tracking, [zh] annotation verification and translation status"
+description = "OpenSource Code Atlas CLI: upstream tracking, 【zh】 annotation verification and translation status"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"

@@ -7,7 +7,7 @@
 ```bash
 git switch study/zh-CN && git pull
 git switch -c tr/model-orderbook
-# … 添加 [zh] 注释 …
+# … 添加 【zh】 注释 …
 osca verify
 osca status
 git commit -am "zh: crates/model orderbook"
@@ -25,7 +25,7 @@ osca sync --pr               # fetch → ff mirror → merge 到 sync/<tag> → 
 有冲突时：
 
 1. `osca sync` 会停下并列出冲突文件；
-2. 冲突块中**上游代码永远优先**，再把仍然适用的 `[zh]` 行放回对应位置（不再适用的删除，并在报告中记下）；
+2. 冲突块中**上游代码永远优先**，再把仍然适用的 `【zh】` 行放回对应位置（不再适用的删除，并在报告中记下）；
 3. `git add <files> && osca sync --continue`；
 4. `git push origin mirror/<branch> sync/<tag>` 并开 PR。
 
