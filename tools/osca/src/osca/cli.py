@@ -14,6 +14,7 @@ import typer
 
 from . import __version__, gitutil, status as status_mod, sync as sync_mod, terms as terms_mod
 from . import impact as impact_mod, index as index_mod, resolve as resolve_mod, state as state_mod
+from . import translate as tr_mod
 from .markers import comment_tokens, strip_text
 from .project import (
     SYNC_FILE,
@@ -300,6 +301,93 @@ def review_approve(
     typer.echo(f"approved {len(done)} annotated symbol(s)")
 
 
+def _load_terms(project: Project, terms_dir: Path | None) -> dict:
+    try:
+        return terms_mod.load_project_terms(project, terms_dir)
+    except Exception as e:  # network / missing file: translation still works without a glossary
+        typer.secho(f"warning: terminology not loaded ({e}); pass --terms-dir", fg=typer.colors.YELLOW, err=True)
+        return {}
+
+
+def _print_result(res) -> None:
+    u = res.usage
+    tok = f"  [in {u.get('input_tokens', 0)} + cache {u.get('cache_read_input_tokens', 0)} / out {u.get('output_tokens', 0)}]" if u else ""
+    if res.error:
+        typer.secho(f"✗ {res.path}: {res.error}{tok}", fg=typer.colors.RED)
+    else:
+        typer.secho(f"✓ {res.path}: {len(res.applied)} annotated, {len(res.unchanged)} judged still correct{tok}", fg=typer.colors.GREEN)
+    for r in res.rejected:
+        typer.echo(f"    rejected {r}")
+    for sid in res.unchanged:
+        typer.echo(f"    unchanged {sid}  (needs `osca review approve`)")
+    if res.notes:
+        typer.echo(f"    notes: {res.notes}")
+
+
+@app.command()
+def translate(
+    paths: Annotated[Optional[list[str]], typer.Argument(help="Files or directories (default: whole scope).")] = None,
+    which: Annotated[str, typer.Option("--state", help="Comma list of states to work on.")] = "pending,stale",
+    max_symbols: Annotated[Optional[int], typer.Option(help="Symbols per request.")] = None,
+    limit_files: Annotated[Optional[int], typer.Option(help="Only the first N files.")] = None,
+    all_symbols: Annotated[bool, typer.Option(help="Also annotate symbols that do not count towards coverage.")] = False,
+    dry_run: Annotated[bool, typer.Option(help="Show the plan and a token estimate; no API calls.")] = False,
+    batch: Annotated[bool, typer.Option(help="Submit through the Message Batches API (async, half price).")] = False,
+    collect: Annotated[Optional[str], typer.Option(help="Apply the results of a finished batch.")] = None,
+    terms_dir: Annotated[Optional[Path], typer.Option(help="Local atlas terminology/ directory.")] = None,
+    yes: Annotated[bool, typer.Option("--yes", "-y", help="Do not ask for confirmation.")] = False,
+) -> None:
+    """Annotate pending / stale symbols with Claude (structured patches; code is never edited by the model)."""
+    project = _project()
+    cfg = tr_mod.ai_config(project)
+    if collect:
+        status_, results = tr_mod.collect_batch(project, collect)
+        if status_ != "ended":
+            typer.echo(f"batch {collect}: {status_}")
+            raise typer.Exit(0)
+        for r in results:
+            _print_result(r)
+        raise typer.Exit(0)
+
+    if not gitutil.is_clean(project.root):
+        die("working tree has uncommitted changes; commit or stash first so AI edits are reviewable")
+    jobs = tr_mod.plan(project, _rel(project, paths), tuple(which.split(",")), max_symbols, limit_files, all_symbols)
+    if not jobs:
+        typer.echo("Nothing to translate.")
+        raise typer.Exit(0)
+    terms = _load_terms(project, terms_dir)
+    n_sym = sum(len(j.targets) for j in jobs)
+    fresh = cached = 0
+    seen: set[str] = set()
+    for j in jobs:
+        file_tok = len(tr_mod.render_file(j, terms).encode()) // 3
+        fresh += len(tr_mod.render_targets(j).encode()) // 3 + 3000
+        if j.path in seen and not batch:
+            cached += file_tok  # later chunks of a file re-read the cached file block
+        else:
+            fresh += file_tok
+            seen.add(j.path)
+    typer.echo(f"{len(jobs)} request(s), {len(seen)} file(s), {n_sym} symbol(s) → {cfg['model']} (effort {cfg['effort']})")
+    typer.echo(
+        f"estimated input ≈ {fresh:,} tokens + {cached:,} cache-read tokens (rough: bytes/3)"
+        + (" — batch: 50% price" if batch else "")
+    )
+    for j in jobs:
+        kinds = ", ".join(f"{k} {sum(t.status == k for t in j.targets)}" for k in ("pending", "stale") if any(t.status == k for t in j.targets))
+        typer.echo(f"  {j.path}  ({kinds})")
+    if dry_run:
+        raise typer.Exit(0)
+    if not yes and not typer.confirm("Call the Claude API now?"):
+        raise typer.Exit(1)
+    if batch:
+        bid = tr_mod.submit_batch(project, jobs, terms)
+        typer.echo(f"submitted batch {bid}; apply later with `osca translate --collect {bid}`")
+        raise typer.Exit(0)
+    results = tr_mod.run(project, jobs, terms, tr_mod.anthropic_caller(), lambda j, r: _print_result(r))
+    done = sum(len(r.applied) for r in results)
+    typer.echo(f"\n{done} symbol(s) annotated. Review with `git diff`, then `osca verify` and commit (state already recorded).")
+
+
 @app.command()
 def impact(
     old: Annotated[str, typer.Argument(help="Old upstream revision.")],
@@ -437,6 +525,31 @@ def workflows_disable(
             subprocess.run(["gh", "workflow", "disable", str(wf["id"]), "--repo", repo], check=True)
         disabled += 1
     typer.echo(f"{disabled} upstream workflow(s) {'would be ' if dry_run else ''}disabled")
+
+
+@terms_app.command("lint")
+def terms_lint(
+    paths: Annotated[Optional[list[str]], typer.Argument(help="Files or directories (default: whole scope).")] = None,
+    terms_dir: Annotated[Optional[Path], typer.Option(help="Local atlas terminology/ directory.")] = None,
+) -> None:
+    """Check 【zh】 lines for translations the terminology marks as `avoid`."""
+    project = _project()
+    terms = terms_mod.load_project_terms(project, terms_dir)
+    lines = []
+    for path, idx in index_mod.index_worktree(project, _rel(project, paths)).items():
+        text = (project.root / path).read_text(encoding="utf-8").split("\n")
+        zh = set(idx.zh_rows)
+        for sym in idx.annotated:
+            context = "\n".join(text[r] for r in range(sym.start, sym.end + 1) if r not in zh)
+            if sym.kind == "module":  # module notes talk about the whole file
+                context = "\n".join(t for r, t in enumerate(text) if r not in zh)
+            lines += [(path, r + 1, text[r], context) for r in sym.zh_rows]
+    problems = terms_mod.lint_text(terms, lines)
+    for p in problems:
+        typer.secho(p, fg=typer.colors.YELLOW)
+    if problems:
+        raise typer.Exit(1)
+    typer.secho(f"✓ {len(lines)} annotation lines, no terminology violations", fg=typer.colors.GREEN)
 
 
 @terms_app.command("validate")

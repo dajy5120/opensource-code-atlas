@@ -20,3 +20,13 @@ def test_repo_terminology_is_valid():
     repo_terms = Path(__file__).resolve().parents[3] / "terminology"
     errors, _, count = validate_dir(repo_terms)
     assert errors == [] and count > 100
+
+
+def test_lint_is_context_sensitive():
+    from osca.terms import lint_text
+
+    terms = {"fill": {"en": "Fill", "zh": "成交", "avoid": ["填充"]}}
+    padding = ("a.rs", 1, "// 【zh】 不足 10 档时用零数量填充", "// Skip padding entries\nfor order in depth.bids {}")
+    fills = ("a.rs", 2, "// 【zh】 处理填充事件", "fn on_fill(&mut self, fill: OrderFilled) {}")
+    assert lint_text(terms, [padding]) == []
+    assert lint_text(terms, [fills]) == ["a.rs:2: 「填充」应译为「成交」（Fill）"]

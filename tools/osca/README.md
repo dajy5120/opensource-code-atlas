@@ -21,7 +21,12 @@ uv tool install "git+https://github.com/dajy5120/opensource-code-atlas#subdirect
 | `osca sync [--to REF] [--dry-run] [--pr]` | 同步上游到 `sync/*` 分支并生成变更报告 |
 | `osca sync --continue` | 自动解冲突失败、手工处理后完成同步 |
 | `osca workflows disable` | 禁用学习仓库中所有非 `osca-*.yml` 的上游工作流 |
+| `osca translate [PATHS] [--dry-run] [--batch]` | 用 Claude 为 pending / stale 符号生成结构化注释补丁（ADR 0005） |
+| `osca translate --collect BATCH_ID` | 应用已完成的批处理结果 |
+| `osca terms lint [PATHS]` | 检查 【zh】 行中 `avoid` 的译法（按上下文） |
 | `osca terms validate [DIR]` | 校验术语库 |
+
+`osca translate` 需要 Claude API 凭证（`ANTHROPIC_API_KEY`，或 `ant auth login` 的配置）。
 
 开发：
 

@@ -15,6 +15,17 @@ git commit -am "zh: crates/model orderbook"
 git push -u origin tr/model-orderbook && gh pr create --base study/zh-CN
 ```
 
+## AI 批量注释
+
+```bash
+git switch -c tr/model-orderbook study/zh-CN
+osca translate crates/model/src/orderbook --dry-run   # 计划与 token 估算
+osca translate crates/model/src/orderbook             # 调用 Claude，逐文件 verify，失败回滚
+git diff                                              # 人工审查
+osca review approve <确认无误的符号或文件>
+git commit -am "zh(ai): crates/model orderbook"
+```
+
 ## 同步上游
 
 ```bash

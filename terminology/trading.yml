@@ -11,7 +11,7 @@ terms:
   spread:           { en: Spread, zh: 买卖价差, avoid: [传播, 扩散] }
   quote_tick:       { en: Quote Tick, zh: 报价 tick }
   trade_tick:       { en: Trade Tick, zh: 成交 tick }
-  bar:              { en: Bar, zh: K 线, avoid: [条, 柱] }
+  bar:              { en: Bar, zh: K 线, avoid: [柱子], note: 指 OHLC K 线数据 }
   market_data:      { en: Market Data, zh: 市场数据, avoid: [行情资料] }
   instrument:       { en: Instrument, zh: 交易品种, avoid: [仪器, 工具] }
   venue:            { en: Venue, zh: 交易场所, avoid: [场地, 地点] }

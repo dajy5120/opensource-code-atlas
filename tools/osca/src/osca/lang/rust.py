@@ -160,3 +160,16 @@ def _in_fence(lines: list[bytes], row: int) -> bool:
             fences += 1
         r -= 1
     return fences % 2 == 1
+
+
+def test_ranges(src: bytes) -> list[tuple[int, int]]:
+    """Row ranges (inclusive) of `#[cfg(test)]` items and `mod tests` blocks, with their attributes."""
+    tree = parse(src)
+    out = []
+    for n in tree.root_node.named_children:
+        if n.type not in ITEMS:
+            continue
+        lead = _leading(n)
+        if _is_test(n, lead):
+            out.append((lead[0].start_point.row if lead else n.start_point.row, n.end_point.row))
+    return out

@@ -46,6 +46,6 @@ terms:
   state_machine:    { en: State Machine, zh: 状态机 }
   throughput:       { en: Throughput, zh: 吞吐量 }
   timestamp:        { en: Timestamp, zh: 时间戳 }
-  trade_off:        { en: Trade-off, zh: 权衡, avoid: [交易] }
+  trade_off:        { en: Trade-off, zh: 权衡 }
   validation:       { en: Validation, zh: 校验 }
   zero_copy:        { en: Zero-copy, zh: 零拷贝 }

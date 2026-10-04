@@ -44,6 +44,7 @@ cd osca-nautilus-trader
 osca verify      # 检查剥离不变式
 osca status      # 翻译覆盖率（符号级）
 osca queue       # 需要复核的注释
+osca translate crates/model --dry-run   # AI 批量注释（结构化补丁）
 osca sync --dry-run
 ```
 
@@ -60,5 +61,5 @@ osca sync --dry-run
 - [x] Phase 0：规范、ADR、术语库
 - [x] Phase 1：双源仓库 + `osca verify / status / sync`
 - [x] Phase 2：Tree-sitter 符号索引、符号级增量检测、自动解冲突、复核队列
-- [ ] Phase 3：AI 翻译流水线（结构化注释补丁）、审核命令
+- [x] Phase 3：AI 翻译流水线（结构化注释补丁）、术语 lint、Claude Code 命令
 - [ ] Phase 4：模板化、总仓库状态聚合、第二个项目
